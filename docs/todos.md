@@ -44,15 +44,15 @@ Goal: a running FastAPI service with a migrated Supabase schema.
   - [x] `chat_threads`
   - [x] `chat_messages`
   - [x] `message_citations`
-- [] Alembic init + first migration:
-  - [] `create extension if not exists vector`
-  - [] `vector(384)` embedding column
-  - [] generated `tsvector` column on chunks
-  - [] HNSW index (vector) + GIN index (full-text)
-  - [] RLS policies (users see only their own chats)
-- [] `uv run alembic upgrade head` against Supabase direct connection
-- [] `app/database/supabase.py` — user-scoped and service-role clients
-- [] Verify: `uv run uvicorn app.main:app --reload` → health check returns 200
+- [X] Alembic init + first migration:
+  - [X] `create extension if not exists vector`
+  - [X] `vector(384)` embedding column
+  - [X] generated `tsvector` column on chunks
+  - [X] HNSW index (vector) + GIN index (full-text)
+  - [X] RLS policies (users see only their own chats)
+- [X] `uv run alembic upgrade head` against Supabase direct connection
+- [X] `app/database/supabase.py` — user-scoped and service-role clients
+- [X] Verify: `uv run uvicorn app.main:app --reload` → health check returns 200
 
 ---
 
