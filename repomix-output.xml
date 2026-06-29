@@ -1,0 +1,3872 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitattributes
+.gitignore
+.gitignore copy
+AGENTS.md
+backend/AGENTS.md
+backend/alembic.ini
+backend/alembic/env.py
+backend/alembic/README
+backend/alembic/script.py.mako
+backend/alembic/versions/b3d99a7b670b_initial_migration.py
+backend/app/__init__.py
+backend/app/auth/__init__.py
+backend/app/auth/dependencies.py
+backend/app/config.py
+backend/app/database/__init__.py
+backend/app/database/base.py
+backend/app/database/models/__init__.py
+backend/app/database/models/chat_messages.py
+backend/app/database/models/chat_threads.py
+backend/app/database/models/document_chunks.py
+backend/app/database/models/message_citations.py
+backend/app/database/models/mixins.py
+backend/app/database/models/source_documents.py
+backend/app/database/models/users.py
+backend/app/database/supabase.py
+backend/app/main.py
+backend/pyproject.toml
+backend/README.md
+data/download.py
+data/README.md
+docs/architecture.md
+docs/client-brief.md
+docs/guides/backend-setup.md
+docs/guides/frontend-setup.md
+docs/guides/supabase-setup.md
+docs/todos.md
+frontend/.gitignore
+frontend/.npmrc
+frontend/@/components/ui/button.tsx
+frontend/AGENTS.md
+frontend/components.json
+frontend/eslint.config.js
+frontend/index.html
+frontend/package.json
+frontend/public/favicon.svg
+frontend/public/icons.svg
+frontend/README.md
+frontend/src/App.css
+frontend/src/App.tsx
+frontend/src/assets/hero.png
+frontend/src/assets/react.svg
+frontend/src/assets/vite.svg
+frontend/src/index.css
+frontend/src/main.tsx
+frontend/tsconfig.app.json
+frontend/tsconfig.json
+frontend/tsconfig.node.json
+frontend/vite.config.ts
+LICENSE
+README copy.md
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".gitattributes">
+# Auto detect text files and perform LF normalization
+* text=auto
+</file>
+
+<file path=".gitignore">
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# UV
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#uv.lock
+
+# poetry
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+#poetry.lock
+
+# pdm
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#pdm.lock
+#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
+#   in version control.
+#   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
+.pdm.toml
+.pdm-python
+.pdm-build/
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+#  and can be added to the global gitignore or merged into this file.  For a more nuclear
+#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+#.idea/
+
+# Ruff stuff:
+.ruff_cache/
+
+# PyPI configuration file
+.pypirc
+
+# Cursor  
+#  Cursor is an AI-powered code editor.`.cursorignore` specifies files/directories to 
+#  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
+#  refer to https://docs.cursor.com/context/ignore-files
+.cursorignore
+.cursorindexingignore
+</file>
+
+<file path=".gitignore copy">
+# Environments / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# Node / Next.js
+node_modules/
+.turbo/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Data / artifacts (downloaded corpus files are large, never check in)
+/data/downloads/*
+!/data/downloads/.gitkeep
+*.parquet
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+</file>
+
+<file path="AGENTS.md">
+# Agent Instructions
+
+This file is the source of truth for any coding agent (Claude Code, Cursor, Codex, etc.) working in this repo. Read it before touching code.
+
+## Stack
+
+- **Backend:** Python + FastAPI
+- **Frontend:** Vite + React SPA + TypeScript
+- **Database:** Supabase Postgres (users, chats, source documents, chunks)
+- **Migrations:** SQLAlchemy models + Alembic from the backend
+- **Retrieval:** Supabase `pgvector` + Postgres full-text search
+- **Auth:** Supabase Auth
+- **Hosting:** Railway (backend service + frontend service)
+- **LLM + embeddings:** OpenAI
+
+Stack is locked unless explicitly changed. Don't propose alternatives without a stated reason.
+
+## Repo layout
+
+```text
+document-copilot/
+├── AGENTS.md           # this file
+├── README.md
+├── data/               # local corpus + download script (payloads gitignored)
+├── docs/               # specs, briefs, design notes
+├── backend/            # FastAPI service (see backend/AGENTS.md)
+└── frontend/           # React SPA (see frontend/AGENTS.md)
+```
+
+## Dependency policy
+
+**Default: write it yourself. Reach for a library only when the alternative would be non-trivial, error-prone, or reinvention of a standard.** Every dependency is a liability — bundle size, supply-chain risk, future upgrade work.
+
+OK to depend on:
+
+- Things that are genuinely hard to get right (HTTP clients, ASGI servers, SQL drivers, parsers, LLM SDKs, ORM, migrations, auth SDKs).
+- The declared stack (FastAPI, React, Vite, Supabase clients, OpenAI SDK, etc.).
+
+Not OK:
+
+- Helper libraries that wrap 5–20 lines of stdlib or platform APIs.
+- Frameworks where a function would do.
+- "Nicer API" layers on top of an already-present dependency.
+
+Before adding a runtime dep, answer in the commit message:
+
+1. What exactly does it do that we can't write in <30 lines of clear code?
+2. How often does it get used?
+3. What's its maintenance / transitive-dep footprint?
+
+Per-stack specifics live in `backend/AGENTS.md` and `frontend/AGENTS.md`.
+
+## Configuration
+
+A single settings module is the source of truth for environment per service (`backend/app/config.py`, `frontend/lib/env.ts`). Do not call `os.getenv` / read `process.env` directly in app code. Do not call `load_dotenv` anywhere. If a third-party SDK reads env vars directly, mirror them in the settings module — don't sprinkle `setdefault` elsewhere.
+
+Fail fast on startup if required config is missing. No silent fallbacks that hide real config errors.
+
+## Code style (universal)
+
+- **Small, obvious functions.** A 15-line function with clear names beats a three-class abstraction.
+- **No premature abstraction.** Three similar lines is better than a badly-named base class. Extract when there's a third caller, not a hypothetical one.
+- **No error handling for cases that can't happen.** Trust internal callers and framework guarantees. Validate only at boundaries: HTTP input, external APIs, DB writes, untrusted parsing.
+- **No backwards-compat shims** unless explicitly asked for.
+- **No feature flags** added speculatively.
+- **Comments:** explain *why* when non-obvious, never *what*. Remove stale TODOs.
+- **Keep files focused.** Prefer small modules.
+</file>
+
+<file path="backend/AGENTS.md">
+# Backend — agent notes
+
+This is the FastAPI service for Document Copilot. Read [../AGENTS.md](../AGENTS.md) first — universal building rules live there. This file adds backend-specific conventions.
+
+## Stack
+
+- Python 3.12+
+- FastAPI + uvicorn
+- Pydantic v2 + pydantic-settings
+- `httpx` for outbound HTTP
+- `pytest` for tests
+- Supabase Python client (DB + auth)
+- SQLAlchemy models + Alembic migrations for database schema changes
+- OpenAI SDK for LLM & embeddings
+- Supabase `pgvector` for semantic search and Postgres full-text search for keyword retrieval. Hybrid search should run vector and full-text queries separately, then fuse ranked results in Python with Reciprocal Rank Fusion.
+- `structlog` for logging
+- `uv` for dependency + project management
+
+## Dependency policy
+
+See universal policy in [../AGENTS.md](../AGENTS.md). Backend-specific:
+
+- **Prefer stdlib:** `pathlib`, `datetime`, `uuid`, `enum`, `dataclasses`, `asyncio`, `collections`, `itertools`, `json`, `urllib`.
+- **Not OK without justification:** `python-dateutil`, `toolz`, `funcy`, `more-itertools`, small JSON/string micro-libs, "ergonomic" wrappers on top of declared SDKs.
+- Dev deps (test/lint/build) have a looser bar but still pick widely-used, low-footprint tools (`pytest`, `ruff`, `httpx`).
+
+## Layout (to be created during build)
+
+```text
+backend/
+├── alembic/
+│   ├── env.py           # Imports app database metadata for autogenerate
+│   └── versions/        # Reviewed migration files
+├── alembic.ini
+├── app/
+│   ├── main.py          # FastAPI entrypoint
+│   ├── config.py        # Pydantic settings — single source of truth for env
+│   ├── api/             # FastAPI routers (chat, ingest, auth)
+│   ├── auth/            # Supabase JWT verification + current user dependency
+│   ├── chat/            # turn orchestration, AI SDK message conversion, streaming
+│   ├── assistant/       # PydanticAI agent, deps, outputs, instructions
+│   ├── retrieval/       # pgvector/full-text queries, RRF fusion, source passage lookup
+│   ├── grounding/       # citation validation and answer grounding checks
+│   ├── database/        # SQLAlchemy models, Supabase client wrapper, typed query helpers
+│   └── prompts/         # prompt/instruction templates if not colocated with assistant
+├── ingest/              # one-off ingestion scripts (Markdown extraction, chunking, embedding, Supabase writes)
+├── tests/
+└── pyproject.toml
+```
+
+## Code style (backend-specific)
+
+- **Type hints on public functions and module-level things.** Don't annotate every local.
+- **Async by default in request-path code.** Don't run blocking I/O on the event loop. Tempfile + small synchronous file reads are OK (they're fast); network calls must be async.
+- **Use `async def` for all route handlers** and any I/O service function.
+- **Validate at boundaries only.** HTTP input is validated by Pydantic models. External API responses are validated when parsed. Internal callers are trusted.
+
+## Configuration
+
+- `app.config.settings` is the single source of truth. Import settings where needed; never call `os.getenv` in app code, never call `load_dotenv`.
+- If a third-party SDK reads `os.environ` directly, add the mirror in `config.py` — don't sprinkle `setdefault` elsewhere.
+- Fail fast on startup when required env vars are missing.
+
+## Database migrations
+
+- Alembic is the source of truth for schema changes. Do not change production tables manually in the Supabase dashboard.
+- SQLAlchemy models describe normal tables and columns. Alembic autogenerate creates candidate migrations, but every generated migration must be reviewed before applying.
+- Supabase/Postgres-specific features belong in explicit migration operations: `create extension vector`, generated `tsvector` columns, HNSW/GIN indexes, RLS enablement, and RLS policies.
+- Alembic must use the direct/session database connection, not the Supabase transaction pooler URL.
+- Run migrations from `backend/` with `uv run alembic upgrade head`.
+
+## Tests
+
+- **Prefer unit over integration.** Mock at the service boundary.
+- Fast suite (`pytest -m "not integration"`) must stay green and hit no network / no DB.
+- Integration tests go behind `@pytest.mark.integration` and may require live OpenAI / Supabase credentials.
+- Tests live next to what they test (`retrieval/retriever.py` → `tests/retrieval/test_retriever.py`).
+- Required test coverage: ingestion logic, retrieval, citation extraction, grounding enforcement.
+
+## Anti-patterns (rejected)
+
+- `os.getenv` / `load_dotenv` in modules.
+- Wrapping FastAPI responses in custom envelope classes.
+- Over-catching `Exception` just to log and re-raise; let it propagate.
+- Shared state through globals instead of FastAPI `app.state` or DI.
+- Silent fallbacks that hide real config errors.
+- Mocking the LLM in unit tests without also testing the grounding contract — the prompt is the product.
+</file>
+
+<file path="backend/alembic.ini">
+# A generic, single database configuration.
+
+[alembic]
+# path to migration scripts.
+# this is typically a path given in POSIX (e.g. forward slashes)
+# format, relative to the token %(here)s which refers to the location of this
+# ini file
+script_location = alembic
+
+# template used to generate migration file names; The default value is %%(rev)s_%%(slug)s
+# Uncomment the line below if you want the files to be prepended with date and time
+# see https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file
+# for all available tokens
+# file_template = %%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s
+# Or organize into date-based subdirectories (requires recursive_version_locations = true)
+# file_template = %%(year)d/%%(month).2d/%%(day).2d_%%(hour).2d%%(minute).2d_%%(second).2d_%%(rev)s_%%(slug)s
+
+# sys.path path, will be prepended to sys.path if present.
+# defaults to the current working directory.  for multiple paths, the path separator
+# is defined by "path_separator" below.
+prepend_sys_path = .
+
+
+# timezone to use when rendering the date within the migration file
+# as well as the filename.
+# If specified, requires the tzdata library which can be installed by adding
+# `alembic[tz]` to the pip requirements.
+# string value is passed to ZoneInfo()
+# leave blank for localtime
+# timezone =
+
+# max length of characters to apply to the "slug" field
+# truncate_slug_length = 40
+
+# set to 'true' to run the environment during
+# the 'revision' command, regardless of autogenerate
+# revision_environment = false
+
+# set to 'true' to allow .pyc and .pyo files without
+# a source .py file to be detected as revisions in the
+# versions/ directory
+# sourceless = false
+
+# version location specification; This defaults
+# to <script_location>/versions.  When using multiple version
+# directories, initial revisions must be specified with --version-path.
+# The path separator used here should be the separator specified by "path_separator"
+# below.
+# version_locations = %(here)s/bar:%(here)s/bat:%(here)s/alembic/versions
+
+# path_separator; This indicates what character is used to split lists of file
+# paths, including version_locations and prepend_sys_path within configparser
+# files such as alembic.ini.
+# The default rendered in new alembic.ini files is "os", which uses os.pathsep
+# to provide os-dependent path splitting.
+#
+# Note that in order to support legacy alembic.ini files, this default does NOT
+# take place if path_separator is not present in alembic.ini.  If this
+# option is omitted entirely, fallback logic is as follows:
+#
+# 1. Parsing of the version_locations option falls back to using the legacy
+#    "version_path_separator" key, which if absent then falls back to the legacy
+#    behavior of splitting on spaces and/or commas.
+# 2. Parsing of the prepend_sys_path option falls back to the legacy
+#    behavior of splitting on spaces, commas, or colons.
+#
+# Valid values for path_separator are:
+#
+# path_separator = :
+# path_separator = ;
+# path_separator = space
+# path_separator = newline
+#
+# Use os.pathsep. Default configuration used for new projects.
+path_separator = os
+
+# set to 'true' to search source files recursively
+# in each "version_locations" directory
+# new in Alembic version 1.10
+# recursive_version_locations = false
+
+# the output encoding used when revision files
+# are written from script.py.mako
+# output_encoding = utf-8
+
+# database URL.  This is consumed by the user-maintained env.py script only.
+# other means of configuring database URLs may be customized within the env.py
+# file.
+sqlalchemy.url = driver://user:pass@localhost/dbname
+
+
+[post_write_hooks]
+# post_write_hooks defines scripts or Python functions that are run
+# on newly generated revision scripts.  See the documentation for further
+# detail and examples
+
+# format using "black" - use the console_scripts runner, against the "black" entrypoint
+# hooks = black
+# black.type = console_scripts
+# black.entrypoint = black
+# black.options = -l 79 REVISION_SCRIPT_FILENAME
+
+# lint with attempts to fix using "ruff" - use the module runner, against the "ruff" module
+# hooks = ruff
+# ruff.type = module
+# ruff.module = ruff
+# ruff.options = check --fix REVISION_SCRIPT_FILENAME
+
+# Alternatively, use the exec runner to execute a binary found on your PATH
+# hooks = ruff
+# ruff.type = exec
+# ruff.executable = ruff
+# ruff.options = check --fix REVISION_SCRIPT_FILENAME
+
+# Logging configuration.  This is also consumed by the user-maintained
+# env.py script only.
+[loggers]
+keys = root,sqlalchemy,alembic
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = WARNING
+handlers = console
+qualname =
+
+[logger_sqlalchemy]
+level = WARNING
+handlers =
+qualname = sqlalchemy.engine
+
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
+
+[formatter_generic]
+format = %(levelname)-5.5s [%(name)s] %(message)s
+datefmt = %H:%M:%S
+</file>
+
+<file path="backend/alembic/env.py">
+import asyncio
+import sys
+from logging.config import fileConfig
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
+
+from alembic import context
+
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+    import sys
+    
+    # 💡 On Windows, force the loop factory to use SelectorEventLoop instead of the deprecated policy hook
+    if sys.platform == "win32":
+        from asyncio import SelectorEventLoop
+        asyncio.run(run_async_migrations(), loop_factory=SelectorEventLoop)
+    else:
+        asyncio.run(run_async_migrations())
+
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
+config = context.config
+
+# Interpret the config file for Python logging.
+# This line sets up loggers basically.
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+import os
+import sys
+from pathlib import Path
+
+# Add the backend directory to sys.path for module imports
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+
+from app.database.base import Base
+from app.config import settings
+from app.database import models  # Import your models package or individual models
+
+target_metadata = Base.metadata
+
+# other values from the config, defined by the needs of env.py,
+# can be acquired:
+# my_important_option = config.get_main_option("my_important_option")
+# ... etc.
+
+
+def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode.
+
+    This configures the context with just a URL
+    and not an Engine, though an Engine is acceptable
+    here as well.  By skipping the Engine creation
+    we don't even need a DBAPI to be available.
+
+    Calls to context.execute() here emit the given string to the
+    script output.
+
+    """
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(connection=connection, target_metadata=target_metadata)
+    with context.begin_transaction():
+        context.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        context.run_migrations()
+
+
+async def run_async_migrations() -> None:
+    """In this scenario we need to create an Engine
+    and associate a connection with the context.
+
+    """
+
+    connectable = async_engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+        url=settings.database_url,
+    )
+
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+
+    await connectable.dispose()
+
+
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+    import sys
+    
+    # On Windows, force the loop factory to use SelectorEventLoop for psycopg compatibility
+    if sys.platform == "win32":
+        from asyncio import SelectorEventLoop
+        asyncio.run(run_async_migrations(), loop_factory=SelectorEventLoop)
+    else:
+        asyncio.run(run_async_migrations())
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
+</file>
+
+<file path="backend/alembic/README">
+Generic single-database configuration with an async dbapi.
+</file>
+
+<file path="backend/alembic/script.py.mako">
+"""${message}
+
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+${imports if imports else ""}
+
+# revision identifiers, used by Alembic.
+revision: str = ${repr(up_revision)}
+down_revision: Union[str, Sequence[str], None] = ${repr(down_revision)}
+branch_labels: Union[str, Sequence[str], None] = ${repr(branch_labels)}
+depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    ${upgrades if upgrades else "pass"}
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    ${downgrades if downgrades else "pass"}
+</file>
+
+<file path="backend/alembic/versions/b3d99a7b670b_initial_migration.py">
+"""initial migration
+
+Revision ID: b3d99a7b670b
+Revises: 
+Create Date: 2026-06-28 15:11:07.552075
+
+"""
+from typing import Sequence, Union
+
+
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+import pgvector
+
+
+
+# revision identifiers, used by Alembic.
+revision: str = 'b3d99a7b670b'
+down_revision: Union[str, Sequence[str], None] = None
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.create_table('source_documents',
+    sa.Column('ticker', sa.String(length=16), nullable=False),
+    sa.Column('cik', sa.String(length=20), nullable=False),
+    sa.Column('company_name', sa.String(length=255), nullable=True),
+    sa.Column('form', sa.String(length=16), nullable=False),
+    sa.Column('filing_date', sa.Date(), nullable=False),
+    sa.Column('report_date', sa.Date(), nullable=True),
+    sa.Column('accession_number', sa.String(length=64), nullable=False),
+    sa.Column('primary_document', sa.String(length=255), nullable=True),
+    sa.Column('source_url', sa.Text(), nullable=False),
+    sa.Column('markdown_content', sa.Text(), nullable=False),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('accession_number', name='uq_source_documents_accession_number')
+    )
+    op.create_index('ix_source_documents_ticker_filing_date', 'source_documents', ['ticker', 'filing_date'], unique=False)
+    op.create_table('users',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('email', sa.String(length=320), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('email')
+    )
+    op.create_table('chat_threads',
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_chat_threads_user_id', 'chat_threads', ['user_id'], unique=False)
+    op.create_table('document_chunks',
+    sa.Column('source_document_id', sa.UUID(), nullable=False),
+    sa.Column('chunk_index', sa.Integer(), nullable=False),
+    sa.Column('page', sa.String(length=64), nullable=True),
+    sa.Column('section', sa.String(length=255), nullable=True),
+    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('token_count', sa.Integer(), nullable=True),
+    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=384), nullable=True),
+    sa.Column('search_vector', postgresql.TSVECTOR(), nullable=True),
+    sa.Column('ticker', sa.String(length=16), nullable=False),
+    sa.Column('company_name', sa.String(length=255), nullable=True),
+    sa.Column('form', sa.String(length=16), nullable=False),
+    sa.Column('filing_date', sa.String(length=32), nullable=False),
+    sa.Column('filing_year', sa.Integer(), nullable=True),
+    sa.Column('accession_number', sa.String(length=64), nullable=False),
+    sa.Column('metadata_json', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['source_document_id'], ['source_documents.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('source_document_id', 'chunk_index', name='uq_document_chunks_document_chunk_index')
+    )
+    op.create_index('ix_document_chunks_source_document_id', 'document_chunks', ['source_document_id'], unique=False)
+    op.create_index('ix_document_chunks_ticker', 'document_chunks', ['ticker'], unique=False)
+    op.create_table('chat_messages',
+    sa.Column('thread_id', sa.UUID(), nullable=False),
+    sa.Column('role', sa.Enum('USER', 'ASSISTANT', name='message_role', native_enum=False, length=16), nullable=False),
+    sa.Column('sequence', sa.Integer(), nullable=False),
+    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('message_json', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['thread_id'], ['chat_threads.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('thread_id', 'sequence', name='uq_chat_messages_thread_sequence')
+    )
+    op.create_index('ix_chat_messages_thread_id', 'chat_messages', ['thread_id'], unique=False)
+    op.create_table('message_citations',
+    sa.Column('message_id', sa.UUID(), nullable=False),
+    sa.Column('chunk_id', sa.UUID(), nullable=False),
+    sa.Column('citation_index', sa.Integer(), nullable=False),
+    sa.Column('ticker', sa.String(length=16), nullable=False),
+    sa.Column('company_name', sa.String(length=255), nullable=True),
+    sa.Column('form', sa.String(length=16), nullable=False),
+    sa.Column('filing_date', sa.String(length=32), nullable=False),
+    sa.Column('page', sa.String(length=64), nullable=True),
+    sa.Column('section', sa.String(length=255), nullable=True),
+    sa.Column('excerpt', sa.Text(), nullable=False),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.ForeignKeyConstraint(['chunk_id'], ['document_chunks.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['message_id'], ['chat_messages.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('message_id', 'citation_index', name='uq_message_citations_message_citation_index')
+    )
+    op.create_index('ix_message_citations_chunk_id', 'message_citations', ['chunk_id'], unique=False)
+    op.create_index('ix_message_citations_message_id', 'message_citations', ['message_id'], unique=False)
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index('ix_message_citations_message_id', table_name='message_citations')
+    op.drop_index('ix_message_citations_chunk_id', table_name='message_citations')
+    op.drop_table('message_citations')
+    op.drop_index('ix_chat_messages_thread_id', table_name='chat_messages')
+    op.drop_table('chat_messages')
+    op.drop_index('ix_document_chunks_ticker', table_name='document_chunks')
+    op.drop_index('ix_document_chunks_source_document_id', table_name='document_chunks')
+    op.drop_table('document_chunks')
+    op.drop_index('ix_chat_threads_user_id', table_name='chat_threads')
+    op.drop_table('chat_threads')
+    op.drop_table('users')
+    op.drop_index('ix_source_documents_ticker_filing_date', table_name='source_documents')
+    op.drop_table('source_documents')
+    # ### end Alembic commands ###
+</file>
+
+<file path="backend/app/__init__.py">
+
+</file>
+
+<file path="backend/app/auth/__init__.py">
+
+</file>
+
+<file path="backend/app/auth/dependencies.py">
+"""FastAPI dependencies for Supabase JWT authentication."""
+
+from __future__ import annotations
+
+import uuid
+from dataclasses import dataclass
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+# Import your existing factory
+from app.database.supabase import create_user_client
+
+_bearer = HTTPBearer(auto_error=False)
+
+@dataclass(frozen=True, slots=True)
+class CurrentUser:
+    id: uuid.UUID
+    email: str
+
+def _unauthorized(detail: str = "Not authenticated") -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+async def get_access_token(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+) -> str:
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise _unauthorized()
+    
+    token = credentials.credentials.strip()
+    if not token:
+        raise _unauthorized()
+    return token
+
+async def get_current_user(
+    access_token: str = Depends(get_access_token),
+) -> CurrentUser:
+    # Use your existing factory from app/database/supabase.py
+    client = await create_user_client(access_token)
+
+    try:
+        # get_user validates the JWT
+        response = await client.auth.get_user(access_token)
+    except Exception:
+        # General catch-all for network or library errors
+        raise _unauthorized("Invalid or expired token")
+
+    if response is None or response.user is None or not response.user.email:
+        raise _unauthorized("Invalid or expired token")
+
+    return CurrentUser(
+        id=uuid.UUID(str(response.user.id)),
+        email=response.user.email,
+    )
+</file>
+
+<file path="backend/app/config.py">
+"""Application settings — single source of truth for backend environment."""
+
+from functools import lru_cache
+from pathlib import Path
+from typing import Annotated
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+_ENV_FILE = _BACKEND_DIR / ".env"
+
+
+def _settings_config() -> SettingsConfigDict:
+    kwargs: dict[str, object] = {
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
+    if _ENV_FILE.is_file():
+        kwargs["env_file"] = _ENV_FILE
+    return SettingsConfigDict(**kwargs)
+
+
+class Settings(BaseSettings):
+    model_config = _settings_config()
+
+    # Supabase (Auth + API)
+    supabase_url: str
+    supabase_anon_key: str
+    supabase_service_role_key: str
+
+    # Postgres (Alembic + direct DB access — use session/direct host, not pooler)
+    database_url: str
+
+    # OpenAI (generation + embeddings)
+    openai_api_key: str
+    openai_model_name: str = "llama-3.3-70b-versatile"
+    openai_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    openai_embedding_dimensions: int = 384
+
+    # Server
+    allowed_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["http://localhost:5173"]
+    )
+
+    @field_validator("allowed_origins", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, value: str | list[str]) -> list[str]:
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
+
+    # @field_validator("database_url")
+    # @classmethod
+    # def database_url_must_be_postgres(cls, value: str) -> str:
+    #     if not value.startswith("postgresql"):
+    #         raise ValueError("DATABASE_URL must be a PostgreSQL connection string")
+    #     return value
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()
+</file>
+
+<file path="backend/app/database/__init__.py">
+"""Database layer — SQLAlchemy models and Supabase clients."""
+
+from app.database.base import Base
+from app.database.models import (
+    ChatMessage,
+    ChatThread,
+    DocumentChunk,
+    MessageCitation,
+    MessageRole,
+    SourceDocument,
+    User,
+)
+
+__all__ = [
+    "Base",
+    "ChatMessage",
+    "ChatThread",
+    "DocumentChunk",
+    "MessageCitation",
+    "MessageRole",
+    "SourceDocument",
+    "User",
+]
+</file>
+
+<file path="backend/app/database/base.py">
+"""SQLAlchemy declarative base and metadata."""
+
+from sqlalchemy.orm import DeclarativeBase
+
+
+class Base(DeclarativeBase):
+    pass
+</file>
+
+<file path="backend/app/database/models/__init__.py">
+"""SQLAlchemy table models — import all models so Alembic autogenerate sees metadata."""
+
+from app.database.base import Base
+from app.database.models.chat_messages import ChatMessage, MessageRole
+from app.database.models.chat_threads import ChatThread
+from app.database.models.document_chunks import DocumentChunk
+from app.database.models.message_citations import MessageCitation
+from app.database.models.source_documents import SourceDocument
+from app.database.models.users import User
+
+__all__ = [
+    "Base",
+    "ChatMessage",
+    "ChatThread",
+    "DocumentChunk",
+    "MessageCitation",
+    "MessageRole",
+    "SourceDocument",
+    "User",
+]
+</file>
+
+<file path="backend/app/database/models/chat_messages.py">
+"""Chat messages within a thread."""
+
+from __future__ import annotations
+
+import enum
+from uuid import UUID
+
+from sqlalchemy import Enum, ForeignKey, Index, Integer, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database.base import Base
+from app.database.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+
+
+class MessageRole(str, enum.Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+
+
+class ChatMessage(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "chat_messages"
+    __table_args__ = (
+        UniqueConstraint("thread_id", "sequence", name="uq_chat_messages_thread_sequence"),
+        Index("ix_chat_messages_thread_id", "thread_id"),
+    )
+
+    thread_id: Mapped[UUID] = mapped_column(
+        ForeignKey("chat_threads.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    role: Mapped[MessageRole] = mapped_column(
+        Enum(MessageRole, name="message_role", native_enum=False, length=16),
+        nullable=False,
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    message_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
+    thread: Mapped["ChatThread"] = relationship(back_populates="messages")
+    citations: Mapped[list["MessageCitation"]] = relationship(
+        back_populates="message",
+        cascade="all, delete-orphan",
+        order_by="MessageCitation.citation_index",
+    )
+</file>
+
+<file path="backend/app/database/models/chat_threads.py">
+"""Chat conversation threads."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from sqlalchemy import ForeignKey, Index, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database.base import Base
+from app.database.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+
+
+class ChatThread(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "chat_threads"
+    __table_args__ = (Index("ix_chat_threads_user_id", "user_id"),)
+
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    user: Mapped["User"] = relationship(back_populates="chat_threads")
+    messages: Mapped[list["ChatMessage"]] = relationship(
+        back_populates="thread",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.sequence",
+    )
+</file>
+
+<file path="backend/app/database/models/document_chunks.py">
+"""Retrieval-ready document chunks with embeddings and full-text search."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.config import settings
+from app.database.base import Base
+from app.database.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+
+
+class DocumentChunk(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "document_chunks"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_document_id",
+            "chunk_index",
+            name="uq_document_chunks_document_chunk_index",
+        ),
+        Index("ix_document_chunks_source_document_id", "source_document_id"),
+        Index("ix_document_chunks_ticker", "ticker"),
+    )
+
+    source_document_id: Mapped[UUID] = mapped_column(
+        ForeignKey("source_documents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    page: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    section: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    token_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(settings.openai_embedding_dimensions),
+        nullable=True,
+    )
+    # Generated tsvector column — migration adds GENERATED ALWAYS AS (...) STORED
+    search_vector: Mapped[str | None] = mapped_column(TSVECTOR, nullable=True)
+    ticker: Mapped[str] = mapped_column(String(16), nullable=False)
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    form: Mapped[str] = mapped_column(String(16), nullable=False)
+    filing_date: Mapped[str] = mapped_column(String(32), nullable=False)
+    filing_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    accession_number: Mapped[str] = mapped_column(String(64), nullable=False)
+    metadata_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
+    source_document: Mapped["SourceDocument"] = relationship(back_populates="chunks")
+    citations: Mapped[list["MessageCitation"]] = relationship(back_populates="chunk")
+</file>
+
+<file path="backend/app/database/models/message_citations.py">
+"""Citations linking assistant messages to source document chunks."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from sqlalchemy import ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database.base import Base
+from app.database.models.mixins import UUIDPrimaryKeyMixin
+
+
+class MessageCitation(Base, UUIDPrimaryKeyMixin):
+    __tablename__ = "message_citations"
+    __table_args__ = (
+        UniqueConstraint(
+            "message_id",
+            "citation_index",
+            name="uq_message_citations_message_citation_index",
+        ),
+        Index("ix_message_citations_message_id", "message_id"),
+        Index("ix_message_citations_chunk_id", "chunk_id"),
+    )
+
+    message_id: Mapped[UUID] = mapped_column(
+        ForeignKey("chat_messages.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    chunk_id: Mapped[UUID] = mapped_column(
+        ForeignKey("document_chunks.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    citation_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    ticker: Mapped[str] = mapped_column(String(16), nullable=False)
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    form: Mapped[str] = mapped_column(String(16), nullable=False)
+    filing_date: Mapped[str] = mapped_column(String(32), nullable=False)
+    page: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    section: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    excerpt: Mapped[str] = mapped_column(Text, nullable=False)
+
+    message: Mapped["ChatMessage"] = relationship(back_populates="citations")
+    chunk: Mapped["DocumentChunk"] = relationship(back_populates="citations")
+</file>
+
+<file path="backend/app/database/models/mixins.py">
+"""Shared SQLAlchemy model mixins."""
+
+from datetime import datetime
+from uuid import UUID
+
+from sqlalchemy import DateTime, func, text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+
+class UUIDPrimaryKeyMixin:
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+
+
+class TimestampMixin:
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+</file>
+
+<file path="backend/app/database/models/source_documents.py">
+"""SEC filing source documents."""
+
+from __future__ import annotations
+
+from datetime import date
+
+from sqlalchemy import Date, Index, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database.base import Base
+from app.database.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+
+
+class SourceDocument(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "source_documents"
+    __table_args__ = (
+        UniqueConstraint("accession_number", name="uq_source_documents_accession_number"),
+        Index("ix_source_documents_ticker_filing_date", "ticker", "filing_date"),
+    )
+
+    ticker: Mapped[str] = mapped_column(String(16), nullable=False)
+    cik: Mapped[str] = mapped_column(String(20), nullable=False)
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    form: Mapped[str] = mapped_column(String(16), nullable=False)
+    filing_date: Mapped[date] = mapped_column(Date, nullable=False)
+    report_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    accession_number: Mapped[str] = mapped_column(String(64), nullable=False)
+    primary_document: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    source_url: Mapped[str] = mapped_column(Text, nullable=False)
+    markdown_content: Mapped[str] = mapped_column(Text, nullable=False)
+
+    chunks: Mapped[list["DocumentChunk"]] = relationship(
+        back_populates="source_document",
+        cascade="all, delete-orphan",
+    )
+</file>
+
+<file path="backend/app/database/models/users.py">
+"""App user profile — keyed by Supabase auth.users.id."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database.base import Base
+from app.database.models.mixins import TimestampMixin
+
+
+class User(Base, TimestampMixin):
+    __tablename__ = "users"
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
+
+    chat_threads: Mapped[list["ChatThread"]] = relationship(back_populates="user")
+</file>
+
+<file path="backend/app/database/supabase.py">
+"""Supabase client construction for server-side database and auth access."""
+
+from supabase import AsyncClient, acreate_client
+from supabase.lib.client_options import AsyncClientOptions
+
+from app.config import settings
+
+_service_role_client: AsyncClient | None = None
+
+
+def _server_client_options(
+    *,
+    access_token: str | None = None,
+) -> AsyncClientOptions:
+    headers: dict[str, str] = {}
+    if access_token is not None:
+        headers["Authorization"] = f"Bearer {access_token}"
+
+    return AsyncClientOptions(
+        headers=headers,
+        auto_refresh_token=False,
+        persist_session=False,
+    )
+
+
+def _normalize_access_token(access_token: str) -> str:
+    prefix = "Bearer "
+    if access_token.startswith(prefix):
+        return access_token.removeprefix(prefix)
+    return access_token
+
+
+async def get_service_role_client() -> AsyncClient:
+    """Return a shared client that bypasses RLS — backend-only privileged access."""
+    global _service_role_client
+
+    if _service_role_client is None:
+        _service_role_client = await acreate_client(
+            settings.supabase_url,
+            settings.supabase_service_role_key,
+            options=_server_client_options(),
+        )
+
+    return _service_role_client
+
+
+async def create_user_client(access_token: str) -> AsyncClient:
+    """Return a request-scoped client that enforces RLS for the authenticated user."""
+    return await acreate_client(
+        settings.supabase_url,
+        settings.supabase_anon_key,
+        options=_server_client_options(
+            access_token=_normalize_access_token(access_token),
+        ),
+    )
+</file>
+
+<file path="backend/app/main.py">
+"""FastAPI application entrypoint."""
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import settings
+
+app = FastAPI(title="Document Copilot")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+</file>
+
+<file path="backend/README.md">
+# Backend (FastAPI)
+
+Document Copilot API — retrieval, chat orchestration, and grounding.
+
+**Requires:** Python 3.12+, [uv](https://docs.astral.sh/uv/), a Supabase project.
+
+## Setup
+
+```bash
+cd backend
+uv sync
+```
+
+Copy env vars into `backend/.env` (see [supabase-setup](../docs/guides/supabase-setup.md)). Required keys are read by `app/config.py`:
+
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `DATABASE_URL` (direct Postgres host for Alembic — not the pooler URL)
+- `OPENAI_API_KEY`
+- `ALLOWED_ORIGINS` (e.g. `http://localhost:5173`)
+
+## Run
+
+```bash
+cd backend
+uv run uvicorn app.main:app --reload
+```
+
+API: `http://localhost:8000` · Health: `GET /health`
+
+Alternative:
+
+```bash
+uv run python app/main.py
+```
+
+## Dev
+
+```bash
+uv run pytest -m "not integration"   # unit tests
+uv run ruff check app                  # lint
+```
+
+## Migrations
+
+```bash
+uv run alembic upgrade head
+```
+
+Full Alembic workflow: [backend-setup](../docs/guides/backend-setup.md).
+</file>
+
+<file path="data/download.py">
+# /// script
+# requires-python = ">=3.12"
+# ///
+from __future__ import annotations
+
+import json
+import shutil
+import time
+from datetime import UTC, datetime
+from pathlib import Path
+from urllib import request
+
+
+# Params: edit these, then run `uv run data/download.py`
+USER_AGENT = "Document Copilot your.email@example.com"
+TICKERS = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL"]
+FILINGS_PER_COMPANY = 5
+OUTPUT_DIR = Path(__file__).resolve().parent / "downloads"
+CLEAR_OUTPUT_DIR = True
+
+COMPANY_CIKS = {
+    "AAPL": "0000320193",
+    "MSFT": "0000789019",
+    "NVDA": "0001045810",
+    "AMZN": "0001018724",
+    "GOOGL": "0001652044",
+}
+
+
+def get_json(url: str) -> dict:
+    req = request.Request(
+        url, headers={"Accept": "application/json", "User-Agent": USER_AGENT}
+    )
+    with request.urlopen(req, timeout=30) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def get_bytes(url: str) -> bytes:
+    req = request.Request(
+        url,
+        headers={
+            "Accept": "text/html,application/xhtml+xml,application/xml",
+            "User-Agent": USER_AGENT,
+        },
+    )
+    with request.urlopen(req, timeout=60) as response:
+        return response.read()
+
+
+def download_filings() -> dict:
+    if CLEAR_OUTPUT_DIR and OUTPUT_DIR.exists():
+        shutil.rmtree(OUTPUT_DIR)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    target_years = {
+        str(year)
+        for year in range(
+            datetime.now(UTC).year - FILINGS_PER_COMPANY, datetime.now(UTC).year
+        )
+    }
+    manifest = {
+        "source": "SEC EDGAR",
+        "generated_at_utc": datetime.now(UTC).isoformat(),
+        "form": "10-K",
+        "downloaded_count": 0,
+        "filings": [],
+    }
+
+    for ticker in TICKERS:
+        print(f"Downloading {ticker} filings...")
+        cik = COMPANY_CIKS[ticker]
+        submission = get_json(f"https://data.sec.gov/submissions/CIK{cik}.json")
+        submissions = [submission]
+        submissions.extend(
+            get_json(f"https://data.sec.gov/submissions/{item['name']}")
+            for item in submission.get("filings", {}).get("files", [])
+        )
+
+        filings = []
+        for sec_submission in submissions:
+            filings.extend(extract_10k_filings(sec_submission, target_years))
+            if len(filings) >= FILINGS_PER_COMPANY:
+                break
+
+        for filing in filings[:FILINGS_PER_COMPANY]:
+            accession_path = filing["accession_number"].replace("-", "")
+            source_url = (
+                "https://www.sec.gov/Archives/edgar/data/"
+                f"{int(cik)}/{accession_path}/{filing['primary_document']}"
+            )
+            year_dir = OUTPUT_DIR / filing["year"]
+            year_dir.mkdir(parents=True, exist_ok=True)
+            local_path = year_dir / (
+                f"{ticker.lower()}_{filing['form'].lower()}_"
+                f"{filing['filing_date']}_{filing['accession_number']}"
+                f"{Path(filing['primary_document']).suffix or '.html'}"
+            )
+            local_path.write_bytes(get_bytes(source_url))
+
+            manifest["filings"].append(
+                {
+                    "ticker": ticker,
+                    "cik": cik,
+                    "form": filing["form"],
+                    "filing_date": filing["filing_date"],
+                    "report_date": filing["report_date"],
+                    "accession_number": filing["accession_number"],
+                    "primary_document": filing["primary_document"],
+                    "source_url": source_url,
+                    "local_path": str(local_path.relative_to(OUTPUT_DIR)),
+                }
+            )
+            manifest["downloaded_count"] += 1
+
+            time.sleep(0.2)
+
+    manifest_path = OUTPUT_DIR / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    return manifest
+
+
+def extract_10k_filings(
+    submission: dict, target_years: set[str]
+) -> list[dict[str, str]]:
+    recent = submission["filings"]["recent"] if "filings" in submission else submission
+    filings = []
+
+    for form, accession, document, filing_date, report_date in zip(
+        recent["form"],
+        recent["accessionNumber"],
+        recent["primaryDocument"],
+        recent["filingDate"],
+        recent["reportDate"],
+        strict=True,
+    ):
+        year = (report_date or filing_date)[:4]
+        if form == "10-K" and year in target_years:
+            filings.append(
+                {
+                    "year": year,
+                    "form": form,
+                    "accession_number": accession,
+                    "primary_document": document,
+                    "filing_date": filing_date,
+                    "report_date": report_date,
+                }
+            )
+
+    return filings
+
+
+if __name__ == "__main__":
+    result = download_filings()
+    print(f"Downloaded {result['downloaded_count']} filing(s) to {OUTPUT_DIR}")
+    print(f"Manifest: {OUTPUT_DIR / 'manifest.json'}")
+</file>
+
+<file path="data/README.md">
+# Data
+
+Local data artifacts for development live here.
+
+- `downloads/` holds raw source files fetched from SEC EDGAR, grouped by year.
+- Downloaded payloads are gitignored because the corpus can get large.
+- Fetch a sample corpus with `uv run data/download.py`
+</file>
+
+<file path="docs/architecture.md">
+# Document Copilot Architecture
+
+## Purpose
+
+Document Copilot is an internal research assistant for analysts who need grounded answers from a curated SEC filing corpus. The architecture must optimize for trust: every answer is generated from retrieved source passages, every factual claim is citable, and the system fails clearly when the corpus does not support an answer.
+
+This document describes the target architecture for the chat experience, LLM orchestration, and the communication layer between the React SPA, Supabase, and FastAPI backend.
+
+## High-Level Architecture
+
+The best opening diagram is a service-level view that shows the two core paths: the live chat path that serves users, and the ingestion path that prepares SEC filings for retrieval.
+
+```mermaid
+flowchart LR
+    user[Analyst] --> browser[Browser<br/>React chat app]
+
+    subgraph railway[Railway]
+        frontend[Frontend service<br/>Vite build]
+        backend[Backend service<br/>FastAPI + PydanticAI]
+    end
+
+    subgraph supabase[Supabase]
+        auth[Auth<br/>email session]
+        db[(Postgres<br/>chats, documents, chunks<br/>pgvector + full-text)]
+    end
+
+    openai[OpenAI<br/>LLM + embeddings]
+    corpus[SEC filing corpus]
+    ingestion[Ingestion pipeline<br/>download, parse, chunk, embed]
+
+    frontend -->|serves app| browser
+    browser -->|sign in| auth
+    auth -->|JWT session| browser
+    browser -->|chat request + JWT| backend
+    backend -->|verify user| auth
+    backend -->|retrieve passages<br/>persist chats + citations| db
+    backend -->|generate grounded answer| openai
+    backend -->|stream answer + citations| browser
+
+    corpus --> ingestion
+    ingestion -->|create embeddings| openai
+    ingestion -->|store documents + chunks| db
+```
+
+## Architectural Goals
+
+- Keep the browser thin: it renders chat state, manages the user's Supabase session, and streams assistant responses.
+- Keep the backend authoritative: retrieval, grounding, citation checks, tool execution, and database writes happen in FastAPI.
+- Use Supabase for identity and durable product state: users, chat threads, source documents, chunks, embeddings, and citation metadata.
+- Use Supabase `pgvector` for semantic retrieval and Postgres full-text search for keyword retrieval.
+- Make the LLM path typed and testable by using PydanticAI agents with explicit dependencies, outputs, and tool boundaries.
+- Preserve a simple deployment model on Railway: one frontend service, one stateless backend service, and hosted Supabase.
+
+## Stack
+
+Frontend:
+
+- Vite + React SPA + TypeScript
+- React Router for routing
+- Tailwind CSS and shadcn/ui for UI
+- `@supabase/supabase-js` for browser auth
+- Vercel AI SDK UI packages for chat state and streaming client behavior
+
+Backend:
+
+- Python 3.12+
+- FastAPI + Uvicorn
+- Pydantic v2 + pydantic-settings
+- PydanticAI for typed LLM orchestration
+- OpenAI SDK for generation and embeddings
+- Supabase Python client for server-side database access
+- SQLAlchemy models + Alembic migrations for schema management
+- Supabase `pgvector` for semantic search
+- Postgres full-text search for lexical retrieval
+- `httpx` for outbound HTTP
+- `structlog` for structured logs
+
+Persistence:
+
+- Supabase Auth for email login
+- Supabase Postgres for user records, chat threads, chat messages, source documents, chunks, embeddings, full-text search vectors, and citation metadata
+
+## System Boundaries
+
+The frontend is responsible for user interaction, local UI state, and sending the authenticated user's request to the backend. It should never hold service-role credentials, run retrieval logic, call OpenAI directly, or write privileged records to Supabase.
+
+The backend is responsible for request authorization, retrieval, prompt construction, LLM execution, citation validation, streaming responses, and durable persistence. It owns all privileged credentials and is the only service allowed to use the Supabase service-role key.
+
+Supabase is responsible for authentication and durable product state. Browser access uses the anon key and user JWT. Server access uses either the user's bearer token for user-scoped operations or the service-role key for privileged writes that must still be explicitly tied to the authenticated user.
+
+## Request Flow
+
+1. The user signs in with Supabase email auth in the React SPA.
+2. The frontend stores the Supabase session through `@supabase/supabase-js`.
+3. When the user opens a chat, the frontend loads the thread and prior messages through FastAPI, which reads user-scoped records from Supabase.
+4. The chat UI uses the Vercel AI SDK React primitives to manage message state and submit new user messages to the FastAPI chat endpoint.
+5. The frontend sends the Supabase access token as `Authorization: Bearer <token>`.
+6. FastAPI verifies the token with Supabase Auth before doing any retrieval or LLM work.
+7. FastAPI creates a request-scoped context containing the authenticated user, chat thread, Supabase client, retrieval service, citation policy, and LLM settings.
+8. A PydanticAI agent retrieves relevant document chunks, generates a grounded answer, and returns typed output containing answer text and citations.
+9. FastAPI streams assistant message parts back to the browser in the format expected by the AI SDK client.
+10. FastAPI persists the final user message, assistant message, cited chunks, and usage metadata to Supabase.
+
+## Frontend Chat Layer
+
+The frontend remains a plain Vite SPA. It should not adopt Next.js route handlers or server components. The AI SDK is used only for its React chat primitives and streaming client behavior.
+
+The chat module should be organized around these responsibilities:
+
+- `src/lib/env.ts` validates `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY`.
+- `src/lib/supabase.ts` creates the browser Supabase client.
+- `src/lib/http.ts` wraps `fetch`, applies the backend base URL, injects the Supabase bearer token, handles timeouts, and converts failures into typed API errors.
+- `src/lib/api.ts` exposes product-level calls such as loading threads, creating threads, and fetching message history.
+- `src/pages/chat/*` renders chat routes and delegates chat streaming to a focused chat component.
+- `src/components/chat/*` renders messages, citations, source passages, empty states, and streaming status.
+
+The chat component should initialize with stored messages and then let the AI SDK manage in-flight UI state. The transport points to FastAPI, not to a frontend server route.
+
+Conceptual shape:
+
+```ts
+const { messages, sendMessage, status, error } = useChat({
+  id: threadId,
+  messages: initialMessages,
+  transport: new DefaultChatTransport({
+    api: `${apiBaseUrl}/chat/stream`,
+    headers: async () => ({
+      Authorization: `Bearer ${await getAccessToken()}`,
+    }),
+  }),
+});
+```
+
+The exact API surface should be verified during implementation against the installed AI SDK version. The architectural rule is stable: the browser streams to FastAPI with the user's Supabase token, and FastAPI owns the assistant run.
+
+## Backend LLM Layer
+
+PydanticAI should be introduced as the backend's orchestration layer for answer generation. It replaces ad hoc prompt calls with a typed agent boundary.
+
+Recommended backend modules:
+
+```text
+backend/app/
+├── api/
+│   └── chat.py                 # FastAPI routes for chat threads and streaming
+├── auth/
+│   └── dependencies.py         # Supabase JWT verification and current user dependency
+├── chat/
+│   ├── orchestrator.py         # Coordinates one chat turn end-to-end
+│   ├── messages.py             # Converts AI SDK messages to and from internal message types
+│   └── streaming.py            # Emits AI SDK-compatible streaming events
+├── assistant/
+│   ├── agent.py                # PydanticAI agent definition
+│   ├── deps.py                 # Runtime dependency dataclass for the agent
+│   ├── outputs.py              # GroundedAnswer, Citation, and SourcePassage
+│   └── instructions.md         # System instructions and product contract
+├── retrieval/
+│   ├── queries.py              # pgvector and full-text SQL queries
+│   ├── fusion.py               # Reciprocal Rank Fusion for hybrid search
+│   └── retriever.py            # Query-to-source-passage retrieval logic
+├── grounding/
+│   └── validator.py            # Ensures citations map to retrieved passages
+└── database/
+    ├── supabase.py             # Supabase client construction
+    ├── models.py               # SQLAlchemy table models used by Alembic autogenerate
+    ├── chats.py                # Chat, thread, message, and citation persistence
+    └── documents.py            # Source document, chunk, embedding, and search queries
+```
+
+These names should follow the product workflow rather than a generic service layer. `chat/orchestrator.py` owns the full turn lifecycle, `assistant/agent.py` owns the LLM boundary, `retrieval/` owns hybrid source-passage search, and `grounding/` owns the trust contract that answers must cite retrieved evidence.
+
+The agent should receive explicit dependencies rather than reaching into globals:
+
+```python
+@dataclass
+class DocumentAgentDeps:
+    user_id: str
+    thread_id: str
+    retriever: DocumentRetriever
+    grounding_validator: GroundingValidator
+
+
+class GroundedAnswer(BaseModel):
+    answer: str
+    citations: list[Citation]
+    cited_passages: list[SourcePassage]
+```
+
+The agent's instructions should encode the product contract:
+
+- Answer only from retrieved passages.
+- Cite every factual claim.
+- If the retrieved context is insufficient, say that the corpus does not contain enough evidence.
+- Do not provide stock recommendations or investment advice.
+- Keep answers concise enough for analyst review, but include enough cited passages to verify the answer.
+
+Retrieval and grounding remain independent from PydanticAI. This keeps ingestion, retrieval tests, and citation validation testable without invoking the LLM.
+
+## Retrieval Strategy
+
+Document Copilot uses hybrid retrieval:
+
+1. Embed the user's query with the configured OpenAI embedding model.
+2. Run a semantic search over `document_chunks.embedding` with `pgvector`.
+3. Run a lexical search over `document_chunks.search_vector` with Postgres full-text search.
+4. Fuse the two ranked lists in Python with Reciprocal Rank Fusion.
+5. Fetch the selected chunks, source document metadata, and optional neighboring chunks for grounding.
+
+This keeps the database responsible for efficient ranked retrieval and keeps the application responsible for product-specific ranking policy. The first implementation should avoid agent-generated SQL; the PydanticAI agent receives bounded tools such as `search_filings`, `read_chunk`, and `read_surrounding_chunks`.
+
+## Supabase and FastAPI Communication
+
+Supabase Auth is the identity source. FastAPI must treat the browser's Supabase JWT as the request credential.
+
+Frontend rules:
+
+- Use the anon key only in the browser.
+- Read the current session through the shared Supabase client.
+- Send the access token to FastAPI through the shared API client.
+- Never pass tokens through component props.
+- Never expose the service-role key to the frontend.
+
+Backend rules:
+
+- Verify `Authorization: Bearer <token>` at the FastAPI boundary.
+- Reject unauthenticated requests before retrieval or LLM work.
+- Derive `user_id` and email from the verified Supabase user.
+- Use user-scoped database operations wherever possible.
+- Use the service-role key only on the backend for privileged writes that cannot be safely performed with the anon key.
+- Always attach persisted chat records to the authenticated `user_id`.
+
+The backend can verify the JWT by calling Supabase Auth's user endpoint or by validating the project's JWT signing keys. For the first implementation, calling Supabase Auth is simpler and avoids local JWT validation mistakes. If request volume grows, local JWT verification can be added behind the same `AuthService` interface.
+
+Recommended backend units:
+
+- `app/auth/dependencies.py` validates bearer tokens and exposes `get_current_user`.
+- `app/database/supabase.py` creates user-scoped and admin Supabase clients.
+- `app/database/chats.py` stores and reads chat threads, messages, and citation records.
+- `app/database/documents.py` stores and reads source documents, chunks, embeddings, and full-text search data.
+
+## Streaming Contract
+
+The frontend should receive incremental assistant output, not wait for a full answer. FastAPI should expose a streaming endpoint that emits AI SDK-compatible message parts.
+
+Recommended endpoint:
+
+```text
+POST /chat/stream
+Authorization: Bearer <supabase_access_token>
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "threadId": "uuid",
+  "messages": []
+}
+```
+
+The `messages` payload should use the AI SDK UI message format at the frontend boundary. FastAPI can translate that wire format into internal Pydantic models before invoking the agent.
+
+Streaming responsibilities:
+
+- Send text deltas as the answer is generated.
+- Send citation/source metadata as structured parts once available.
+- Send clear error events for authentication failures, missing threads, retrieval failures, and grounding failures.
+- Persist only after the assistant run completes successfully, unless a separate partial-message model is deliberately introduced later.
+
+## Data Model
+
+Supabase tables should be small and product-oriented:
+
+- `profiles`: one row per authenticated user, keyed by Supabase `auth.users.id`.
+- `chat_threads`: thread metadata, owner, title, timestamps.
+- `chat_messages`: user and assistant messages in order, with AI SDK-compatible message JSON where useful.
+- `message_citations`: normalized citation records linked to assistant messages.
+- `source_documents`: original document records with filing metadata, source URL, and normalized Markdown content.
+- `document_chunks`: chunk text, chunk metadata, embeddings, and generated full-text search vectors.
+
+`source_documents` stores the normalized Markdown version of each filing so the application can re-chunk, inspect, and cite the original extracted text without reaching back into downloaded HTML files. `document_chunks` stores retrieval-ready passages:
+
+- chunk ID
+- document ID
+- chunk index
+- page or section metadata
+- chunk text
+- embedding vector
+- generated `tsvector` for full-text search
+- token count
+- metadata JSON for ticker, company, filing type, filing date, year, accession number, page, section, and source offsets
+
+Hybrid retrieval runs two bounded queries against `document_chunks`: a semantic `pgvector` query and a Postgres full-text query. The backend fuses those ranked lists with Reciprocal Rank Fusion, then fetches the selected chunks and neighboring context for grounding.
+
+## Schema Management
+
+Database schema changes are managed from the backend with SQLAlchemy models and Alembic migrations. Supabase is the hosted Postgres database, but the Supabase dashboard is not the source of truth for table definitions.
+
+The workflow is:
+
+1. Update SQLAlchemy models in `app/database/models.py`.
+2. Generate a candidate migration with `uv run alembic revision --autogenerate -m "<change>"`.
+3. Review the generated migration file in `backend/alembic/versions/`.
+4. Add explicit migration operations for Postgres/Supabase features that autogenerate cannot infer reliably.
+5. Apply the migration locally or against the linked Supabase database with `uv run alembic upgrade head`.
+6. Commit both the model changes and the migration file.
+
+Normal tables and ordinary indexes should be represented in SQLAlchemy models where practical. The following should be written explicitly in migrations with `op.execute()` or carefully reviewed Alembic operations:
+
+- `create extension if not exists vector`
+- `vector(1536)` embedding columns if the SQLAlchemy type renderer is not sufficient
+- generated `tsvector` columns
+- HNSW indexes for vector search
+- GIN indexes for full-text search and JSON metadata
+- RLS enablement and policies
+- grants or Supabase role-specific permissions
+
+Alembic must connect with Supabase's direct/session database connection string. Do not run migrations through the transaction pooler URL, because schema migrations, extension setup, and index creation require session-level database behavior.
+
+## Grounding and Citation Policy
+
+Grounding is part of the architecture, not a prompt preference.
+
+The backend should enforce these invariants:
+
+- Every assistant answer has at least one citation unless the answer explicitly says there is not enough evidence.
+- Every citation maps to a retrieved source passage.
+- Cited passages include enough metadata for the frontend to show company, filing, date, page or section, and excerpt.
+- The model cannot cite documents that were not retrieved for the current request.
+- If citation validation fails, the backend returns a controlled failure instead of a polished unsupported answer.
+
+This policy should be covered by backend unit tests around retrieval, citation extraction, and grounding enforcement.
+
+## Error Handling
+
+Expected error classes:
+
+- `401 Unauthorized`: missing, expired, or invalid Supabase token.
+- `403 Forbidden`: authenticated user tries to access another user's thread.
+- `404 Not Found`: thread or source document does not exist.
+- `422 Unprocessable Entity`: invalid request payload.
+- `502 Bad Gateway`: upstream LLM or Supabase failure.
+- `500 Internal Server Error`: unexpected backend failure.
+
+The frontend should render friendly messages while preserving enough technical detail in logs for debugging. Network and CORS failures should be distinguishable from HTTP failures in the shared API client.
+
+## Configuration
+
+Each service must keep one settings module as the source of truth.
+
+Frontend settings:
+
+- `VITE_API_BASE_URL`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+Backend settings:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `DATABASE_URL` for Alembic and direct Postgres access
+- `OPENAI_API_KEY`
+- `ALLOWED_ORIGINS`
+- embedding model name and dimensions
+
+Do not read environment variables directly from components, route handlers, or services. Frontend code should use `src/lib/env.ts`. Backend code should use `app/config.py`.
+
+## Deployment Shape
+
+Railway should run two services:
+
+- Frontend: static Vite build served as a web app.
+- Backend: FastAPI service running Uvicorn.
+
+Supabase remains hosted and stores the durable retrieval data. The Railway backend can stay stateless because document chunks, embeddings, full-text search vectors, chats, and citations all live in Supabase Postgres. Raw downloaded filings remain gitignored local ingestion inputs unless a later workflow stores them in object storage.
+
+## Implementation Sequence
+
+1. Scaffold the frontend SPA and backend FastAPI app according to the repo conventions.
+2. Add SQLAlchemy models and Alembic migration setup in the backend.
+3. Add the initial Alembic migration for `pgvector`, source document, chunk, full-text, chat, and citation tables.
+4. Add Supabase Auth in the frontend and token verification in FastAPI.
+5. Add the shared frontend API client with automatic bearer-token injection.
+6. Add the chat streaming endpoint with a stubbed assistant response.
+7. Add AI SDK chat UI on the frontend pointed at FastAPI.
+8. Add Markdown ingestion, chunking, embeddings, and Supabase writes.
+9. Add semantic search with `pgvector`.
+10. Add Postgres full-text search and Python RRF fusion.
+11. Add PydanticAI document agent with typed dependencies and typed answer output.
+12. Add citation validation and grounding enforcement.
+13. Add final UI for citations, source passages, empty states, and errors.
+
+## Non-Goals
+
+- No Next.js, SSR, server components, or frontend route handlers.
+- No direct OpenAI calls from the browser.
+- No separate managed vector database outside Supabase.
+- No multi-tenant architecture.
+- No external market/news data.
+- No trading recommendations or generated stock picks.
+</file>
+
+<file path="docs/client-brief.md">
+# Client brief — Driftwood Capital
+
+## The client
+
+**Driftwood Capital** is an independent investment research firm with ~40 analysts. They sell deep equity research to institutional clients (hedge funds, mutual funds, pension funds) under annual subscriptions ($50K–$500K+ per client), plus custom commissioned research and analyst calls.
+
+They don't manage money themselves. Their product is research and access to their analysts.
+
+## How Driftwood makes money
+
+- Analysts each cover ~15 US public companies in a specific industry (semiconductors, retail, energy, etc.)
+- They produce written research reports, financial models, and stock-level recommendations
+- Asset-management clients pay for the reports and for the right to call the analyst with questions
+- Reputation is everything — a single bad call dents the franchise
+
+## How they add value
+
+- Their clients (portfolio managers at funds) don't have the bandwidth to read every 10-K, 10-Q, earnings transcript, and industry filing for the companies they invest in
+- Driftwood's analysts have already done that reading and turned it into actionable summaries
+- The value is *condensation*: turning thousands of pages into a one-page thesis the PM can act on
+
+## The problem
+
+Every Driftwood analyst spends roughly **half of every week** doing source-document intake — opening SEC filings, scanning for the sections they care about (risk factors, MD&A, business segments), copy-pasting passages, comparing year-over-year. Only after that intake work can they produce any original analysis.
+
+The intake work is:
+
+- Boring
+- Necessary (you can't analyze what you haven't read)
+- Repetitive across analysts (multiple analysts read the same Apple 10-K every January)
+- The biggest single drag on analyst output
+
+Hiring more analysts doesn't fix it — the intake bottleneck scales linearly with coverage. They want to fix the bottleneck.
+
+## What they want
+
+An internal chatbot — call it **Document Copilot** — where any Driftwood analyst can:
+
+- Ask questions in plain English about any filing in Driftwood's curated corpus
+- Get a sourced answer that cites the specific filing and the specific page
+- Trust the answer enough to base downstream analysis on it
+- Use it from a browser, logged in with their Driftwood email address
+- See their own past conversations
+
+## Example analyst questions
+
+The current sample corpus contains 10-K filings for Apple, Amazon, Alphabet, Microsoft, and NVIDIA across fiscal years 2021–2025. The bot should be able to handle questions like these with cited answers and underlying passages:
+
+1. Across Apple's 2021–2025 10-Ks, how did the revenue mix between iPhone, Services, Mac, iPad, and Wearables change, and which category appears to have contributed most to any mix shift?
+2. For Amazon, compare AWS operating income and margin against North America and International from 2021–2025. In which years did AWS appear to fund losses or weaker profitability elsewhere?
+3. How did NVIDIA describe demand drivers, customer concentration, and supply constraints for its Data Center business from fiscal 2021 through fiscal 2025?
+4. Across Microsoft's 2021–2025 filings, what changed in the way the company describes Azure, AI infrastructure, and cloud capacity constraints?
+5. For Alphabet, how did Google Search, YouTube ads, Google Network, subscriptions/platforms/devices, and Google Cloud revenue trends differ across the available 10-Ks?
+6. Which of the five companies added, removed, or materially changed risk-factor language related to AI, cloud infrastructure, export controls, supply chain concentration, or regulation between 2021 and 2025?
+7. For Apple and NVIDIA, what do the filings say about supplier concentration or dependence on third-party manufacturing, and did the wording become more or less urgent over time?
+8. Compare capital expenditures and purchase commitments for Microsoft, Alphabet, Amazon, and NVIDIA. What do the filings imply about the scale and timing of AI/cloud infrastructure investment?
+9. For each company, summarize the most important geographic revenue exposures disclosed in the latest 10-K, then identify any year-over-year changes that could matter to an analyst.
+10. If an analyst asks whether the filings prove that generative AI improved margins for any of these companies, what evidence exists in the corpus, and where should the bot refuse to infer beyond the filings?
+
+## What "trust" means here
+
+This is a research firm. Their entire business is being right. The bot must:
+
+- **Never invent facts.** If the answer isn't in the corpus, it says so.
+- **Always cite.** Every claim links to the source filing + page.
+- **Show the underlying passage** so the analyst can verify in one click.
+
+A wrong but confident answer is worse than no answer. Hallucinations kill the product.
+
+## Constraints
+
+- Corpus: SEC filings (10-Ks and 10-Qs) for S&P 500 companies, 2020–2025
+- Source: SEC EDGAR (public domain)
+- Users: ~40 Driftwood analysts, plus a few partners
+- Login: Driftwood email addresses (no SSO required)
+- Hosting: must run on a small/medium cloud footprint; Driftwood has no infra team
+
+## Out of scope (explicitly)
+
+- Trading recommendations or stock picks
+- External data sources (no news, no social, no alternative data)
+- Anything generating analysis not grounded in the corpus
+- Multi-tenant / multi-client. This is Driftwood-internal only.
+- Billing, plans, paywalls
+- Mobile app
+
+## Definition of done
+
+The analyst pilot group (5 senior analysts) tries it for a week and reports it saves them at least 3 hours per analyst per week. If yes, Driftwood rolls it out firm-wide.
+</file>
+
+<file path="docs/guides/frontend-setup.md">
+# Frontend setup
+
+This project uses a Vite + React SPA because the frontend is an internal tool that mainly needs fast iteration, authenticated app flows, and a clean connection to the FastAPI backend. We do not need the extra server-rendering, SEO, or full-stack routing features that Next.js is optimized for.
+
+## Init (from empty `frontend/`)
+
+```bash
+cd frontend
+pnpm create vite . --template react-ts
+pnpm install
+pnpm add react-router-dom @supabase/supabase-js
+pnpm add -D tailwindcss @tailwindcss/vite
+pnpm dlx shadcn@latest init
+```
+
+## Run
+
+```bash
+cd frontend
+pnpm install
+pnpm dev
+```
+
+## Check
+
+```bash
+pnpm tsc --noEmit
+pnpm lint
+```
+</file>
+
+<file path="docs/guides/supabase-setup.md">
+# Supabase setup
+
+We use Supabase for **Postgres** (users, chats, source documents, chunks, embeddings, and citations) and **Auth** (email sign-in only). You need one hosted Supabase project before wiring up `backend/` and `frontend/`.
+
+## 1. Create an account
+
+1. Go to [supabase.com](https://supabase.com) and sign up (GitHub or email).
+2. Confirm your email if prompted.
+3. You land in the [dashboard](https://supabase.com/dashboard). The free tier is enough for local development.
+
+## 2. Create a project
+
+1. Open [New project](https://supabase.com/dashboard/new).
+2. Pick your organization (a personal org is created automatically on first signup).
+3. Set a **project name** (e.g. `Document Copilot`).
+4. Choose a **database password** — save it somewhere safe; you need it for direct DB access and `supabase link`.
+5. Pick a **region** close to you.
+6. Click **Create new project** and wait until status is healthy (~1–2 minutes).
+
+## 3. Collect credentials
+
+You need these values in backend and frontend env config (exact variable names will live in each service's settings module once the app is built).
+
+| Value | Where to find it | Used by |
+| ----- | ---------------- | ------- |
+| **Project URL** | Dashboard → **Project Settings** → **API** → Project URL | Frontend + backend |
+| **anon (public) key** | Same page → `anon` `public` key | Frontend (browser-safe) |
+| **service_role (secret) key** | Same page → `service_role` `secret` key | Backend only — never expose to the browser |
+| **Project ref** | Dashboard URL `supabase.com/dashboard/project/<ref>` or `supabase projects list` | CLI commands |
+| **Direct database connection string** | Dashboard → **Project Settings** → **Database** → Connection string | Alembic migrations and backend DB access |
+| **Database password** | What you set at project creation | Direct Postgres connection |
+
+From the CLI you can also print API keys:
+
+```bash
+supabase projects api-keys --project-ref <your-project-ref>
+```
+
+Keep `service_role` out of git, client bundles, and frontend env files.
+
+## 4. Auth settings (email only)
+
+This app uses email auth only — no Google/SSO.
+
+1. Dashboard → **Authentication** → **Providers**.
+2. Leave **Email** enabled.
+3. For local dev, you may want **Authentication** → **Email** → disable "Confirm email" so sign-up works without inbox access (re-enable for production).
+
+## 5. Database schema management
+
+Document Copilot uses Alembic from the Python backend to manage database schema. Do not create production tables manually in the Supabase dashboard.
+
+Alembic migrations create and update:
+
+- the `vector` extension for `pgvector`
+- source document and chunk tables
+- embedding columns
+- generated full-text search columns
+- HNSW and GIN indexes
+- chat and citation tables
+- row-level security policies
+
+Use the direct/session database connection string for Alembic. Do not use the transaction pooler connection string for migrations.
+
+From `backend/`:
+
+```bash
+uv run alembic upgrade head
+```
+
+See [Backend setup](backend-setup.md) for the Alembic workflow.
+
+## Next steps
+
+- [Backend setup](backend-setup.md) — Python service + Supabase client
+- [Frontend setup](frontend-setup.md) — React app + `@supabase/supabase-js`
+</file>
+
+<file path="frontend/.gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+</file>
+
+<file path="frontend/.npmrc">
+# Frontend package manager config — pnpm only.
+#
+# Block packages younger than 7 days (10080 minutes). Defends against
+# the typosquat / compromised-release window where a newly published
+# version of a popular package turns out to be malicious or yanked.
+# If a fresh package is genuinely required, override per-install with
+# --ignore-workspace-root-check + explicit justification in the commit.
+minimum-release-age=10080
+</file>
+
+<file path="frontend/@/components/ui/button.tsx">
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { Slot } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        outline:
+          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+        ghost:
+          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+        destructive:
+          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default:
+          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        icon: "size-8",
+        "icon-xs":
+          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm":
+          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
+        "icon-lg": "size-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }) {
+  const Comp = asChild ? Slot.Root : "button"
+
+  return (
+    <Comp
+      data-slot="button"
+      data-variant={variant}
+      data-size={size}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, buttonVariants }
+</file>
+
+<file path="frontend/AGENTS.md">
+# Frontend — agent notes
+
+This is the React SPA for Document Copilot. Read [../AGENTS.md](../AGENTS.md) first — universal building rules live there. This file adds frontend-specific conventions.
+
+## Stack
+
+- **Plain React SPA** (Vite + TypeScript, strict). **Not Next.js** — do not suggest Next, SSR, server components, or file-based routing.
+- **Tailwind CSS** for styling. No CSS modules, styled-components, Emotion, or `.module.css` files for component styles. Global theme tokens live in `src/index.css`.
+- **shadcn/ui** for UI primitives. Add components with `pnpm dlx shadcn@latest add <name>` — don't hand-roll what shadcn already ships.
+- **React Router** for routing.
+- **`@supabase/supabase-js`** for auth (email only — no Google sign-in, no SSO providers).
+
+## Package manager
+
+**`pnpm` only.** Do not use `npm install` or `yarn add`. The lockfile is `pnpm-lock.yaml`. If you see `package-lock.json` or `yarn.lock` appear, that's a bug — delete it.
+
+**Minimum release age: 7 days.** Configured via `.npmrc` (`minimum-release-age=10080` minutes). pnpm will refuse to install any package version published less than 7 days ago. This defends against typosquat / compromised-release attacks where a malicious version of a popular package goes live and gets pulled within hours.
+
+If a fresh package is genuinely required (e.g. urgent security fix in a dep we already use), override per-install and justify in the commit message — don't lower the global threshold.
+
+## Dependency policy
+
+See universal policy in [../AGENTS.md](../AGENTS.md). Frontend-specific:
+
+- **HTTP:** use the native `fetch` API through a thin client in `src/lib/http.ts` and the `api` singleton in `src/lib/api.ts`. **No axios, ky, got, superagent, redaxios.**
+- **Dates:** use native `Date` and `Intl.DateTimeFormat`. No moment, dayjs, date-fns unless genuinely needed.
+- **Utilities:** use native `Array` / `Object` / `Map` methods. No lodash, ramda.
+- **State:** `useState` / `useReducer` / `useContext` first. Only reach for external state libraries when the pain is real.
+- **Forms:** native `<form>` + `FormData` first.
+- **Validation:** only add a schema library when we actually need runtime validation at boundaries.
+- **UI components:** shadcn primitives via `pnpm dlx shadcn@latest add <name>`. Don't hand-roll what shadcn already ships.
+
+Before adding a package, check:
+
+1. Is there a native browser or TS/JS API that does this?
+2. Does shadcn/ui already cover it?
+3. Is it small, well-maintained, and worth the maintenance cost?
+
+If yes to (3), add it — but flag the decision in the commit message.
+
+## Layout (to be created during build)
+
+```text
+frontend/
+├── src/
+│   ├── components/        # App components. shadcn primitives under components/ui/
+│   ├── lib/               # Framework-agnostic helpers (http, api, auth, supabase, env)
+│   ├── pages/             # Route-level components
+│   ├── App.tsx            # Router
+│   ├── main.tsx
+│   └── index.css          # Tailwind directives + global theme tokens
+├── index.html
+├── vite.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+Keep imports consistent with the `@/*` alias (e.g. `@/lib/api`, `@/components/ui/button`).
+
+## Code style (frontend-specific)
+
+- **TypeScript strict.** No `any` unless there's no alternative; prefer `unknown` and narrow.
+- **Small, composable functions and components** over clever abstractions. Three similar lines > a premature generic.
+- **One component = one file.** Components stay small enough to fit on one screen.
+- **Tailwind classes inline.** No CSS modules, styled-components, Emotion, or `.module.css` for component styles. Global tokens live in `src/index.css`.
+
+## Configuration
+
+- All env reads go through a single `src/lib/env.ts` module that validates required vars at boot. Never read `import.meta.env.X` directly in components.
+- Env vars are prefixed `VITE_` (Vite convention). Anything not prefixed is not exposed to the client.
+
+## Backend integration
+
+- Talks to a separate Python backend over JSON. URL comes from `VITE_API_BASE_URL`.
+- Always use `api.get/post/put/patch/delete` from `@/lib/api` — it handles base URL, JSON, Supabase bearer token, timeouts, and typed `ApiError`s (including the `isNetworkError` flag that distinguishes CORS/network from HTTP errors).
+- Auth is Supabase email. The bearer token is injected automatically via the `api` client; never thread tokens through component props.
+
+## Testing
+
+**No frontend tests.** Do not write `*.test.ts` / `*.test.tsx` files or introduce a test runner. We verify the frontend manually in the browser plus `pnpm tsc --noEmit` and `pnpm lint`. If you find yourself reaching for vitest, Playwright, or Cypress — stop. That's not what this project does. Correctness for shared logic comes from keeping it simple and well-typed, not from a test suite.
+
+## Anti-patterns (rejected)
+
+- Reading `import.meta.env.X` directly outside `lib/env.ts`.
+- Importing an HTTP library when `fetch` would do.
+- Mixing client state libraries (Zustand + Jotai + Redux) for one project.
+- `any` annotations to silence the type-checker.
+- Custom CSS files / styled-components alongside Tailwind.
+- Re-implementing a shadcn primitive by hand.
+- Reaching for Next.js, SSR, or any framework that requires a Node server in front of the SPA.
+</file>
+
+<file path="frontend/components.json">
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "radix-nova",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/index.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "rtl": false,
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "menuColor": "default",
+  "menuAccent": "subtle",
+  "registries": {}
+}
+</file>
+
+<file path="frontend/eslint.config.js">
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
+])
+</file>
+
+<file path="frontend/index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="frontend/package.json">
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.2.9",
+    "@supabase/supabase-js": "^2.108.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.21.0",
+    "radix-ui": "^1.6.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.0",
+    "shadcn": "^4.12.0",
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.3.1",
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "eslint": "^10.5.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.6.0",
+    "tailwindcss": "^4.3.1",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.61.0",
+    "vite": "^8.1.0"
+  }
+}
+</file>
+
+<file path="frontend/public/favicon.svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="46" fill="none" viewBox="0 0 48 46"><path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" style="fill:#863bff;fill:color(display-p3 .5252 .23 1);fill-opacity:1"/><mask id="a" width="48" height="46" x="0" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M25.842 44.938c-.664.844-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.183c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.498 0-3.579-1.842-3.579H1.133c-.92 0-1.456-1.04-.92-1.787L9.91.473c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.578 1.842 3.578h11.377c.943 0 1.473 1.088.89 1.832L25.843 44.94z" style="fill:#000;fill-opacity:1"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#ede6ff" rx="5.508" ry="14.704" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -4.47 31.516)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#ede6ff" rx="10.399" ry="29.851" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -39.328 7.883)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#7e14ff" rx="5.508" ry="30.487" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -25.913 -14.639)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -32.644 -3.334)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -34.34 30.47)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#ede6ff" rx="14.072" ry="22.078" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="rotate(93.35 24.506 48.493)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx=".387" cy="8.972" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(39.51 .387 8.972)"/></g><g filter="url(#k)"><ellipse cx="47.523" cy="-6.092" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 47.523 -6.092)"/></g><g filter="url(#l)"><ellipse cx="41.412" cy="6.333" fill="#47bfff" rx="5.971" ry="9.665" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 41.412 6.333)"/></g><g filter="url(#m)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#n)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#o)"><ellipse cx="35.651" cy="29.907" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 35.651 29.907)"/></g><g filter="url(#p)"><ellipse cx="38.418" cy="32.4" fill="#47bfff" rx="5.971" ry="15.297" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 38.418 32.4)"/></g></g><defs><filter id="b" width="60.045" height="41.654" x="-19.77" y="16.149" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-54.613" y="-7.533" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-49.64" y="2.03" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-45.045" y="20.029" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-43.513" y="21.178" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="15.756" y="-17.901" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-27.636" y="-22.853" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="20.116" y="-38.415" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="24.641" y="-11.323" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="8.244" y="-2.416" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="18.713" y="10.588" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter></defs></svg>
+</file>
+
+<file path="frontend/public/icons.svg">
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="bluesky-icon" viewBox="0 0 16 17">
+    <g clip-path="url(#bluesky-clip)"><path fill="#08060d" d="M7.75 7.735c-.693-1.348-2.58-3.86-4.334-5.097-1.68-1.187-2.32-.981-2.74-.79C.188 2.065.1 2.812.1 3.251s.241 3.602.398 4.13c.52 1.744 2.367 2.333 4.07 2.145-2.495.37-4.71 1.278-1.805 4.512 3.196 3.309 4.38-.71 4.987-2.746.608 2.036 1.307 5.91 4.93 2.746 2.72-2.746.747-4.143-1.747-4.512 1.702.189 3.55-.4 4.07-2.145.156-.528.397-3.691.397-4.13s-.088-1.186-.575-1.406c-.42-.19-1.06-.395-2.741.79-1.755 1.24-3.64 3.752-4.334 5.099"/></g>
+    <defs><clipPath id="bluesky-clip"><path fill="#fff" d="M.1.85h15.3v15.3H.1z"/></clipPath></defs>
+  </symbol>
+  <symbol id="discord-icon" viewBox="0 0 20 19">
+    <path fill="#08060d" d="M16.224 3.768a14.5 14.5 0 0 0-3.67-1.153c-.158.286-.343.67-.47.976a13.5 13.5 0 0 0-4.067 0c-.128-.306-.317-.69-.476-.976A14.4 14.4 0 0 0 3.868 3.77C1.546 7.28.916 10.703 1.231 14.077a14.7 14.7 0 0 0 4.5 2.306q.545-.748.965-1.587a9.5 9.5 0 0 1-1.518-.74q.191-.14.372-.293c2.927 1.369 6.107 1.369 8.999 0q.183.152.372.294-.723.437-1.52.74.418.838.963 1.588a14.6 14.6 0 0 0 4.504-2.308c.37-3.911-.63-7.302-2.644-10.309m-9.13 8.234c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.894 0 1.614.82 1.599 1.82.001 1-.705 1.82-1.6 1.82m5.91 0c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.893 0 1.614.82 1.599 1.82 0 1-.706 1.82-1.6 1.82"/>
+  </symbol>
+  <symbol id="documentation-icon" viewBox="0 0 21 20">
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="m15.5 13.333 1.533 1.322c.645.555.967.833.967 1.178s-.322.623-.967 1.179L15.5 18.333m-3.333-5-1.534 1.322c-.644.555-.966.833-.966 1.178s.322.623.966 1.179l1.534 1.321"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M17.167 10.836v-4.32c0-1.41 0-2.117-.224-2.68-.359-.906-1.118-1.621-2.08-1.96-.599-.21-1.349-.21-2.848-.21-2.623 0-3.935 0-4.983.369-1.684.591-3.013 1.842-3.641 3.428C3 6.449 3 7.684 3 10.154v2.122c0 2.558 0 3.838.706 4.726q.306.383.713.671c.76.536 1.79.64 3.581.66"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M3 10a2.78 2.78 0 0 1 2.778-2.778c.555 0 1.209.097 1.748-.047.48-.129.854-.503.982-.982.145-.54.048-1.194.048-1.749a2.78 2.78 0 0 1 2.777-2.777"/>
+  </symbol>
+  <symbol id="github-icon" viewBox="0 0 19 19">
+    <path fill="#08060d" fill-rule="evenodd" d="M9.356 1.85C5.05 1.85 1.57 5.356 1.57 9.694a7.84 7.84 0 0 0 5.324 7.44c.387.079.528-.168.528-.376 0-.182-.013-.805-.013-1.454-2.165.467-2.616-.935-2.616-.935-.349-.91-.864-1.143-.864-1.143-.71-.48.051-.48.051-.48.787.051 1.2.805 1.2.805.695 1.194 1.817.857 2.268.649.064-.507.27-.857.49-1.052-1.728-.182-3.545-.857-3.545-3.87 0-.857.31-1.558.8-2.104-.078-.195-.349-1 .077-2.078 0 0 .657-.208 2.14.805a7.5 7.5 0 0 1 1.946-.26c.657 0 1.328.092 1.946.26 1.483-1.013 2.14-.805 2.14-.805.426 1.078.155 1.883.078 2.078.502.546.799 1.247.799 2.104 0 3.013-1.818 3.675-3.558 3.87.284.247.528.714.528 1.454 0 1.052-.012 1.896-.012 2.156 0 .208.142.455.528.377a7.84 7.84 0 0 0 5.324-7.441c.013-4.338-3.48-7.844-7.773-7.844" clip-rule="evenodd"/>
+  </symbol>
+  <symbol id="social-icon" viewBox="0 0 20 20">
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M12.5 6.667a4.167 4.167 0 1 0-8.334 0 4.167 4.167 0 0 0 8.334 0"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M2.5 16.667a5.833 5.833 0 0 1 8.75-5.053m3.837.474.513 1.035c.07.144.257.282.414.309l.93.155c.596.1.736.536.307.965l-.723.73a.64.64 0 0 0-.152.531l.207.903c.164.715-.213.991-.84.618l-.872-.52a.63.63 0 0 0-.577 0l-.872.52c-.624.373-1.003.094-.84-.618l.207-.903a.64.64 0 0 0-.152-.532l-.723-.729c-.426-.43-.289-.864.306-.964l.93-.156a.64.64 0 0 0 .412-.31l.513-1.034c.28-.562.735-.562 1.012 0"/>
+  </symbol>
+  <symbol id="x-icon" viewBox="0 0 19 19">
+    <path fill="#08060d" fill-rule="evenodd" d="M1.893 1.98c.052.072 1.245 1.769 2.653 3.77l2.892 4.114c.183.261.333.48.333.486s-.068.089-.152.183l-.522.593-.765.867-3.597 4.087c-.375.426-.734.834-.798.905a1 1 0 0 0-.118.148c0 .01.236.017.664.017h.663l.729-.83c.4-.457.796-.906.879-.999a692 692 0 0 0 1.794-2.038c.034-.037.301-.34.594-.675l.551-.624.345-.392a7 7 0 0 1 .34-.374c.006 0 .93 1.306 2.052 2.903l2.084 2.965.045.063h2.275c1.87 0 2.273-.003 2.266-.021-.008-.02-1.098-1.572-3.894-5.547-2.013-2.862-2.28-3.246-2.273-3.266.008-.019.282-.332 2.085-2.38l2-2.274 1.567-1.782c.022-.028-.016-.03-.65-.03h-.674l-.3.342a871 871 0 0 1-1.782 2.025c-.067.075-.405.458-.75.852a100 100 0 0 1-.803.91c-.148.172-.299.344-.99 1.127-.304.343-.32.358-.345.327-.015-.019-.904-1.282-1.976-2.808L6.365 1.85H1.8zm1.782.91 8.078 11.294c.772 1.08 1.413 1.973 1.425 1.984.016.017.241.02 1.05.017l1.03-.004-2.694-3.766L7.796 5.75 5.722 2.852l-1.039-.004-1.039-.004z" clip-rule="evenodd"/>
+  </symbol>
+</svg>
+</file>
+
+<file path="frontend/README.md">
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+
+```
+</file>
+
+<file path="frontend/src/App.css">
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.hero {
+  position: relative;
+
+  .base,
+  .framework,
+  .vite {
+    inset-inline: 0;
+    margin: 0 auto;
+  }
+
+  .base {
+    width: 170px;
+    position: relative;
+    z-index: 0;
+  }
+
+  .framework,
+  .vite {
+    position: absolute;
+  }
+
+  .framework {
+    z-index: 1;
+    top: 34px;
+    height: 28px;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
+      scale(1.4);
+  }
+
+  .vite {
+    z-index: 0;
+    top: 107px;
+    height: 26px;
+    width: auto;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
+      scale(0.8);
+  }
+}
+
+#center {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  place-content: center;
+  place-items: center;
+  flex-grow: 1;
+
+  @media (max-width: 1024px) {
+    padding: 32px 20px 24px;
+    gap: 18px;
+  }
+}
+
+#next-steps {
+  display: flex;
+  border-top: 1px solid var(--border);
+  text-align: left;
+
+  & > div {
+    flex: 1 1 0;
+    padding: 32px;
+    @media (max-width: 1024px) {
+      padding: 24px 20px;
+    }
+  }
+
+  .icon {
+    margin-bottom: 16px;
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+#docs {
+  border-right: 1px solid var(--border);
+
+  @media (max-width: 1024px) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+#next-steps ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  margin: 32px 0 0;
+
+  .logo {
+    height: 18px;
+  }
+
+  a {
+    color: var(--text-h);
+    font-size: 16px;
+    border-radius: 6px;
+    background: var(--social-bg);
+    display: flex;
+    padding: 6px 12px;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: box-shadow 0.3s;
+
+    &:hover {
+      box-shadow: var(--shadow);
+    }
+    .button-icon {
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    li {
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    a {
+      width: 100%;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+  }
+}
+
+#spacer {
+  height: 88px;
+  border-top: 1px solid var(--border);
+  @media (max-width: 1024px) {
+    height: 48px;
+  }
+}
+
+.ticks {
+  position: relative;
+  width: 100%;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4.5px;
+    border: 5px solid transparent;
+  }
+
+  &::before {
+    left: 0;
+    border-left-color: var(--border);
+  }
+  &::after {
+    right: 0;
+    border-right-color: var(--border);
+  }
+}
+</file>
+
+<file path="frontend/src/App.tsx">
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from './assets/vite.svg'
+import heroImg from './assets/hero.png'
+import './App.css'
+
+function App() {
+  const [count, setCount] = useState(0)
+
+  return (
+    <>
+      <section id="center">
+        <div className="hero">
+          <img src={heroImg} className="base" width="170" height="179" alt="" />
+          <img src={reactLogo} className="framework" alt="React logo" />
+          <img src={viteLogo} className="vite" alt="Vite logo" />
+        </div>
+        <div>
+          <h1>Get started</h1>
+          <p>
+            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+          </p>
+        </div>
+        <button
+          type="button"
+          className="counter"
+          onClick={() => setCount((count) => count + 1)}
+        >
+          Count is {count}
+        </button>
+      </section>
+
+      <div className="ticks"></div>
+
+      <section id="next-steps">
+        <div id="docs">
+          <svg className="icon" role="presentation" aria-hidden="true">
+            <use href="/icons.svg#documentation-icon"></use>
+          </svg>
+          <h2>Documentation</h2>
+          <p>Your questions, answered</p>
+          <ul>
+            <li>
+              <a href="https://vite.dev/" target="_blank">
+                <img className="logo" src={viteLogo} alt="" />
+                Explore Vite
+              </a>
+            </li>
+            <li>
+              <a href="https://react.dev/" target="_blank">
+                <img className="button-icon" src={reactLogo} alt="" />
+                Learn more
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div id="social">
+          <svg className="icon" role="presentation" aria-hidden="true">
+            <use href="/icons.svg#social-icon"></use>
+          </svg>
+          <h2>Connect with us</h2>
+          <p>Join the Vite community</p>
+          <ul>
+            <li>
+              <a href="https://github.com/vitejs/vite" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#github-icon"></use>
+                </svg>
+                GitHub
+              </a>
+            </li>
+            <li>
+              <a href="https://chat.vite.dev/" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#discord-icon"></use>
+                </svg>
+                Discord
+              </a>
+            </li>
+            <li>
+              <a href="https://x.com/vite_js" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#x-icon"></use>
+                </svg>
+                X.com
+              </a>
+            </li>
+            <li>
+              <a href="https://bsky.app/profile/vite.dev" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#bluesky-icon"></use>
+                </svg>
+                Bluesky
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <div className="ticks"></div>
+      <section id="spacer"></section>
+    </>
+  )
+}
+
+export default App
+</file>
+
+<file path="frontend/src/assets/react.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
+</file>
+
+<file path="frontend/src/assets/vite.svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="77" height="47" fill="none" aria-labelledby="vite-logo-title" viewBox="0 0 77 47"><title id="vite-logo-title">Vite</title><style>.parenthesis{fill:#000}@media (prefers-color-scheme:dark){.parenthesis{fill:#fff}}</style><path fill="#9135ff" d="M40.151 45.71c-.663.844-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.493c-.92 0-1.457-1.04-.92-1.788l7.479-10.471c1.07-1.498 0-3.578-1.842-3.578H15.443c-.92 0-1.456-1.04-.92-1.788l9.696-13.576c.213-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.472c-1.07 1.497 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.087.89 1.83L40.153 45.712z"/><mask id="a" width="48" height="47" x="14" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M40.047 45.71c-.663.843-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.389c-.92 0-1.457-1.04-.92-1.788l7.479-10.472c1.07-1.497 0-3.578-1.842-3.578H15.34c-.92 0-1.456-1.04-.92-1.788l9.696-13.575c.213-.297.556-.474.92-.474H53.93c.92 0 1.456 1.04.92 1.788L47.37 13.03c-1.07 1.498 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.088.89 1.831L40.049 45.712z"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#eee6ff" rx="5.508" ry="14.704" transform="rotate(269.814 20.96 11.29)scale(-1 1)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#eee6ff" rx="10.399" ry="29.851" transform="rotate(89.814 -16.902 -8.275)scale(1 -1)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#8900ff" rx="5.508" ry="30.487" transform="rotate(89.814 -19.197 -7.127)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.928 4.177)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.738 5.52)scale(1 -1)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#eee6ff" rx="14.072" ry="22.078" transform="rotate(93.35 31.245 55.578)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx="14.592" cy="9.743" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(39.51 14.592 9.743)"/></g><g filter="url(#k)"><ellipse cx="61.728" cy="-5.321" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 61.728 -5.32)"/></g><g filter="url(#l)"><ellipse cx="55.618" cy="7.104" fill="#00c2ff" rx="5.971" ry="9.665" transform="rotate(37.892 55.618 7.104)"/></g><g filter="url(#m)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#n)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#o)"><ellipse cx="49.857" cy="30.678" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 49.857 30.678)"/></g><g filter="url(#p)"><ellipse cx="52.623" cy="33.171" fill="#00c2ff" rx="5.971" ry="15.297" transform="rotate(37.892 52.623 33.17)"/></g></g><path d="M6.919 0c-9.198 13.166-9.252 33.575 0 46.789h6.215c-9.25-13.214-9.196-33.623 0-46.789zm62.424 0h-6.215c9.198 13.166 9.252 33.575 0 46.789h6.215c9.25-13.214 9.196-33.623 0-46.789" class="parenthesis"/><defs><filter id="b" width="60.045" height="41.654" x="-5.564" y="16.92" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-40.407" y="-6.762" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-35.435" y="2.801" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-30.84" y="20.8" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-29.307" y="21.949" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="29.961" y="-17.13" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-13.43" y="-22.082" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="34.321" y="-37.644" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="38.847" y="-10.552" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="22.45" y="-1.645" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="32.919" y="11.36" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter></defs></svg>
+</file>
+
+<file path="frontend/src/index.css">
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* :root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+#root {
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  border-inline: 1px solid var(--border);
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+} */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+</file>
+
+<file path="frontend/src/main.tsx">
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.tsx'
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+</file>
+
+<file path="frontend/tsconfig.app.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}
+</file>
+
+<file path="frontend/tsconfig.json">
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+</file>
+
+<file path="frontend/tsconfig.node.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "module": "nodenext",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
+
+<file path="frontend/vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import path from "path" 
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"), // 💡 Add this alias block
+    },
+  },
+})
+</file>
+
+<file path="LICENSE">
+MIT License
+
+Copyright (c) 2026 Bismarck
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</file>
+
+<file path="README copy.md">
+# Document Copilot
+
+An internal AI chatbot that lets analysts query a corpus of documents in plain English and get sourced, citable answers.
+
+## The client
+
+**Driftwood Capital** — fictional independent investment research firm. Their analysts spend half their week reading 10-Ks and 10-Qs before they can produce any original analysis. Document Copilot eats that intake work so they can skip straight to insight.
+
+Full brief: [docs/client-brief.md](docs/client-brief.md)
+
+## Stack
+
+| Layer              | Choice                                               |
+| ------------------ | ---------------------------------------------------- |
+| Backend            | Python + FastAPI                                     |
+| Frontend           | Vite + React SPA + TypeScript                        |
+| Database           | Supabase Postgres (users, chats, documents, chunks)  |
+| Migrations         | SQLAlchemy models + Alembic                          |
+| Retrieval          | Supabase `pgvector` + Postgres full-text search      |
+| Auth               | Supabase Auth (email only)                           |
+| Hosting            | Railway                                              |
+| LLM + embeddings   | OpenAI                                               |
+
+## Repo layout
+
+```text
+document-copilot/
+├── AGENTS.md           # agent instructions (read first)
+├── README.md           # this file
+├── data/               # local corpus + download script (payloads gitignored)
+├── docs/
+│   └── client-brief.md # the client one-pager
+├── backend/            # FastAPI service
+└── frontend/           # React SPA (Vite)
+```
+
+## Prerequisites
+
+Install these before setting up `backend/` or `frontend/`:
+
+| Tool | Version | Used for | Install |
+| ---- | ------- | -------- | ------- |
+| [Python](https://www.python.org/downloads/) | 3.12+ | Backend runtime | OS package manager or python.org |
+| [uv](https://docs.astral.sh/uv/getting-started/installation/) | latest | Backend deps + `data/download.py` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| [Node.js](https://nodejs.org/) | 20+ (LTS) | Frontend toolchain | nodejs.org or `nvm install --lts` |
+| [pnpm](https://pnpm.io/installation) | latest | Frontend package manager | `corepack enable && corepack prepare pnpm@latest --activate` |
+
+You also need accounts/keys for external services once the app is wired up. Start with [docs/guides/supabase-setup.md](docs/guides/supabase-setup.md) (account + project), then create an [OpenAI API key](https://platform.openai.com/api-keys) when the LLM layer is wired up.
+
+## Running locally
+
+To be added during the build. Setup guides:
+
+- [Supabase](docs/guides/supabase-setup.md) — account, hosted project (dashboard or CLI)
+- [Backend](docs/guides/backend-setup.md)
+- [Frontend](docs/guides/frontend-setup.md)
+
+## Sample SEC data
+
+Use the standalone downloader to fetch a small local 10-K sample from SEC EDGAR.
+Edit the params at the top of `data/download.py`, especially `USER_AGENT`, then run:
+
+```bash
+uv run data/download.py
+```
+
+By default this downloads the latest 5 10-K filings for AAPL, MSFT, NVDA, AMZN, and GOOGL into year folders under `data/downloads/` and writes a `manifest.json`.
+Downloaded files are gitignored; the `data/` folder itself stays in git for the script and notes.
+</file>
+
+<file path="README.md">
+# fastapi genai project
+a fastapi project with genai
+</file>
+
+<file path="backend/pyproject.toml">
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "document-copilot-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic==1.18.4",
+    "fastapi==0.138.0",
+    "httpx==0.28.1",
+    "huggingface-hub==1.20.1",
+    "openai==2.43.0",
+    "pgvector==0.4.2",
+    "psycopg[binary]==3.3.4",
+    "pydantic==2.13.4",
+    "pydantic-ai==1.102.0",
+    "pydantic-settings==2.14.2",
+    "sentence-transformers==5.6.0",
+    "sqlalchemy==2.0.51",
+    "structlog==26.1.0",
+    "supabase==2.31.0",
+    "uvicorn==0.49.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.uv]
+add-bounds = "exact"
+exclude-newer = "7 days"
+
+[dependency-groups]
+dev = [
+    "ipykernel==7.3.0",
+    "pytest==9.1.1",
+    "ruff==0.15.18",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"app/database/models/*.py" = ["F821"]
+</file>
+
+<file path="docs/guides/backend-setup.md">
+# Backend setup
+
+This project uses a separate Python + FastAPI backend because the server is responsible for AI and document-processing work, not just basic web CRUD. Python gives us the strongest ecosystem for ingestion, chunking, embeddings, retrieval, evaluation, and LLM workflows. Keeping this logic behind a dedicated API also keeps the frontend focused on the user experience while the backend owns data access, orchestration, and grounding.
+
+## Init (from empty `backend/`)
+
+```bash
+cd backend
+uv sync
+uv add fastapi uvicorn pydantic pydantic-settings httpx structlog openai supabase pydantic-ai sqlalchemy alembic "psycopg[binary]" pgvector sentence-transformers huggingface-hub
+uv add --dev pytest ruff
+```
+
+## Database migrations
+
+Alembic owns database schema changes for this project. SQLAlchemy models describe the app tables, and Alembic migrations apply those changes to Supabase Postgres.
+
+Initialize Alembic once from `backend/`:
+
+```bash
+uv run alembic init alembic
+```
+
+Configure `alembic/env.py` to import the app's SQLAlchemy metadata and read the direct database URL from `app.config.settings`. Use the direct/session Supabase database connection, not the transaction pooler URL, for migrations.
+
+Create a migration after changing SQLAlchemy models:
+
+```bash
+uv run alembic revision --autogenerate -m "add document tables"
+```
+
+Always review the generated migration. Add explicit operations for Supabase/Postgres features that autogenerate cannot reliably infer:
+
+- `create extension if not exists vector`
+- `vector(1536)` columns
+- generated `tsvector` columns
+- HNSW and GIN indexes
+- RLS enablement and policies
+
+Apply migrations:
+
+```bash
+uv run alembic upgrade head
+```
+
+## Run
+
+```bash
+cd backend
+uv sync
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload
+```
+
+## Imports (`from app...`)
+
+`backend/app` is installed as an editable package by `uv sync`, so `from app...` imports work from uvicorn, direct Python execution, tests, and Jupyter kernels that use the backend venv.
+
+The `[build-system]` and `[tool.hatch.build.targets.wheel]` sections in `backend/pyproject.toml` tell uv how to install the local `app/` package. Without that package install, imports depend on the current working directory or a manually configured `PYTHONPATH`, which is fragile in notebooks and IDE run buttons.
+
+Preferred API server command:
+
+```bash
+cd backend
+uv run uvicorn app.main:app --reload
+```
+
+Direct file execution also works:
+
+```bash
+cd backend
+uv run python app/main.py
+```
+
+For Jupyter, install and select the backend kernel:
+
+```bash
+cd backend
+uv run python -m ipykernel install --user --name document-copilot-backend --display-name "Document Copilot Backend"
+```
+
+Then notebooks can import backend modules:
+
+```python
+from app.config import settings
+```
+
+## Sample SEC data
+
+From the repo root (stdlib-only script, no backend env needed):
+
+```bash
+uv run data/download.py
+```
+</file>
+
+<file path="docs/todos.md">
+# Document Copilot — implementation checklist
+
+Work top to bottom. Each phase unlocks the next. Check items off as you go.
+
+## Where to start: backend, frontend, or both?
+
+**Start with foundation, then backend-led vertical slices.**
+
+| Order | Why |
+| ----- | --- |
+| 1. Supabase + sample data | Everything persists here; you need a project and a corpus to test against. |
+| 2. Backend schema + migrations | Auth, chat, retrieval, and citations all depend on the data model. |
+| 3. Thin vertical slices | Wire auth, then a stubbed chat stream, then real RAG — each slice touches frontend + backend together. |
+| 4. Frontend in parallel (lightly) | Scaffold the SPA early, but don't build citation UI or chat polish until the backend can return real grounded answers. |
+
+The critical path is **data model → ingestion → retrieval → LLM → citations**. The frontend is mostly a streaming chat shell with auth and citation display — it shouldn't get far ahead of working APIs.
+
+---
+
+## Phase 0 — Prerequisites & foundation
+
+- [x] Install toolchain: Python 3.12+, `uv`, Node 20+, `pnpm` (see [README](../README.md))
+- [x] Create Supabase project and collect credentials ([supabase-setup](guides/supabase-setup.md))
+- [x] Create OpenAI API key (needed from Phase 6 onward)
+- [x] Set `USER_AGENT` in `data/download.py` and download sample 10-K corpus:
+  ```bash
+  uv run data/download.py
+  ```
+- [x] Confirm `data/downloads/manifest.json` lists AAPL, MSFT, NVDA, AMZN, GOOGL filings (2021–2025)
+
+---
+
+## Phase 1 — Backend scaffold & database
+
+Goal: a running FastAPI service with a migrated Supabase schema.
+
+- [X] Init backend deps and project layout ([backend-setup](guides/backend-setup.md))
+- [x] `app/config.py` — settings module, fail fast on missing env vars
+- [x] `app/main.py` — FastAPI app, CORS, health check (`GET /health`)
+- [x] SQLAlchemy models in `app/database/models/`:
+  - [x] `users`
+  - [x] `source_documents`
+  - [x] `document_chunks` (embedding + generated `tsvector`)
+  - [x] `chat_threads`
+  - [x] `chat_messages`
+  - [x] `message_citations`
+- [X] Alembic init + first migration:
+  - [X] `create extension if not exists vector`
+  - [X] `vector(384)` embedding column
+  - [X] generated `tsvector` column on chunks
+  - [X] HNSW index (vector) + GIN index (full-text)
+  - [X] RLS policies (users see only their own chats)
+- [X] `uv run alembic upgrade head` against Supabase direct connection
+- [X] `app/database/supabase.py` — user-scoped and service-role clients
+- [X] Verify: `uv run uvicorn app.main:app --reload` → health check returns 200
+
+---
+
+## Phase 2 — Auth (full stack)
+
+Goal: analysts can sign in with email; backend rejects unauthenticated requests.
+
+**Backend**
+
+- [X] `app/auth/dependencies.py` — verify `Authorization: Bearer <supabase_jwt>`, expose `get_current_user`
+- [X] Reject missing/expired tokens with `401` before any chat or retrieval work
+
+**Frontend**
+
+- [X] Scaffold Vite + React + TypeScript + Tailwind + shadcn ([frontend-setup](guides/frontend-setup.md))
+- [] `src/lib/env.ts` — validate `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- [] `src/lib/supabase.ts` — browser Supabase client
+- [] `src/lib/http.ts` + `src/lib/api.ts` — fetch wrapper with automatic bearer token
+- [] Sign-in / sign-up pages (email only, no SSO)
+- [] Protected routes — redirect unauthenticated users to login
+- [] Verify: sign up, sign in, token reaches backend on a test authenticated endpoint
+
+---
+
+## Phase 3 — Chat shell (vertical slice, stubbed)
+
+Goal: end-to-end chat UI streaming from FastAPI, no real retrieval yet.
+
+**Backend**
+
+- [] Chat thread CRUD: list threads, create thread, load message history
+- [] `POST /chat/stream` — accepts AI SDK message format, streams a stubbed assistant reply
+- [] Persist user + assistant messages to `chat_messages` after stream completes
+- [] `403` when user accesses another user's thread
+
+**Frontend**
+
+- [] React Router: login, chat list, chat thread routes
+- [] AI SDK chat primitives pointed at `POST /chat/stream` with Supabase bearer token
+- [] Thread sidebar (past conversations)
+- [] Basic message list + input + streaming indicator
+- [] Verify: create thread, send message, see streamed stub response, reload and see history
+
+---
+
+## Phase 4 — Ingestion pipeline
+
+Goal: SEC filings in the corpus are parsed, chunked, embedded, and stored in Supabase.
+
+- [] `ingest/` scripts (or CLI entrypoint) for one-off corpus loading
+- [] HTML → normalized Markdown extraction (preserve page/section metadata)
+- [] Chunking strategy (size + overlap; store chunk index, page, section, ticker, filing type, year)
+- [] Write `source_documents` rows with filing metadata from `manifest.json`
+- [] Write `document_chunks` rows with text + metadata
+- [] OpenAI embedding generation → store `vector(1536)` per chunk
+- [] Generated `tsvector` populated for full-text search
+- [] Idempotent re-run (skip already-ingested documents)
+- [] Unit tests: chunking logic, metadata extraction
+- [] Run ingestion on full sample corpus (25 filings × 5 companies)
+- [] Verify: chunks exist in Supabase; spot-check a known passage (e.g. Apple revenue mix table)
+
+---
+
+## Phase 5 — Retrieval
+
+Goal: a user question returns ranked, relevant source passages.
+
+- [] `retrieval/queries.py` — pgvector semantic search over `document_chunks`
+- [] `retrieval/queries.py` — Postgres full-text search over `search_vector`
+- [] `retrieval/fusion.py` — Reciprocal Rank Fusion in Python
+- [] `retrieval/retriever.py` — query → fused ranked passages + neighbor chunks
+- [] Unit tests: fusion ranking, query assembly (mock DB)
+- [] Integration test (optional, `@pytest.mark.integration`): real query against ingested corpus
+- [] Verify: test queries from [client-brief](client-brief.md) return relevant chunks (manual or scripted)
+
+---
+
+## Phase 6 — LLM agent & grounding
+
+Goal: grounded answers with enforced citations — the core product contract.
+
+- [] `assistant/instructions.md` — product contract (cite everything, refuse to invent, no stock picks)
+- [] PydanticAI agent with typed deps (`DocumentAgentDeps`) and output (`GroundedAnswer`)
+- [] Agent tools: `search_filings`, `read_chunk`, `read_surrounding_chunks`
+- [] `chat/orchestrator.py` — one turn: retrieve → agent → validate → stream → persist
+- [] `grounding/validator.py` — every citation maps to a retrieved passage; fail closed on violation
+- [] `chat/streaming.py` — AI SDK-compatible stream (text deltas + citation metadata parts)
+- [] Persist `message_citations` linked to assistant messages
+- [] Unit tests: citation validation, grounding enforcement, message conversion
+- [] Verify against [client-brief example questions](client-brief.md#example-analyst-questions):
+  - [] Answers cite specific filings and pages
+  - [] Under-specified questions get "not enough evidence" responses
+  - [] Question 10 (generative AI margins) refuses to infer beyond filings
+
+---
+
+## Phase 7 — Trust UI (citations & source passages)
+
+Goal: analysts can verify every claim in one click — this is what makes the product usable.
+
+- [] Citation chips/links on assistant messages (company, filing type, date, page/section)
+- [] Source passage panel — show underlying excerpt for selected citation
+- [] Empty states (no threads, no corpus match)
+- [] Error states (auth expired, retrieval failure, grounding failure, network/CORS)
+- [] Loading/streaming status during assistant run
+- [] Verify: click a citation → see the exact passage from the filing
+
+---
+
+## Phase 8 — Pilot readiness
+
+Goal: 5 senior analysts can use it for a week and report ≥3 hours saved per analyst per week.
+
+- [] README "Running locally" section — copy-paste commands for backend + frontend + env vars
+- [] Seed or document how to ingest/update the corpus
+- [ ] Smoke-test all 10 example questions from the client brief
+- [ ] Confirm chat history persists across sessions
+- [ ] Confirm ~40-user scale assumptions (no hardcoded single-user shortcuts)
+- [ ] Basic structured logging on backend (`structlog`) for debugging failed turns
+- [ ] Review latency: streaming starts within a few seconds for typical queries
+
+---
+
+## Phase 9 — Deployment (Railway)
+
+- [] Railway: backend service (Uvicorn, env vars, `ALLOWED_ORIGINS`)
+- [] Railway: frontend service (Vite build, `VITE_*` env vars at build time)
+- [] Supabase: re-enable email confirmation for production if disabled during dev
+- [] Run `alembic upgrade head` against production Supabase (direct connection)
+- [] Run ingestion against production database
+- [] End-to-end test on deployed URLs with a real Driftwood-style email account
+
+---
+
+## Quick reference
+
+| Doc | Purpose |
+| --- | ------- |
+| [client-brief.md](client-brief.md) | What Driftwood needs and example questions |
+| [architecture.md](architecture.md) | System design, data model, streaming contract |
+| [guides/supabase-setup.md](guides/supabase-setup.md) | Hosted Postgres + Auth |
+| [guides/backend-setup.md](guides/backend-setup.md) | FastAPI + Alembic commands |
+| [guides/frontend-setup.md](guides/frontend-setup.md) | Vite + React scaffold commands |
+</file>
+
+</files>
