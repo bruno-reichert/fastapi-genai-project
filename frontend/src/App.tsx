@@ -3,7 +3,9 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { PublicRoute } from '@/components/PublicRoute'
 import { Login } from '@/pages/Login'
 import { SignUp } from '@/pages/SignUp'
-import { ChatsWorkspace } from '@/pages/ChatsWorkspace'
+import { ChatLayout } from '@/components/chat/ChatLayout'
+import { ChatEmptyPage } from '@/pages/chat/ChatEmptyPage'
+import { ChatThreadPage } from '@/pages/chat/ChatThreadPage'
 
 function App() {
   return (
@@ -29,10 +31,13 @@ function App() {
           path="/chats"
           element={
             <ProtectedRoute>
-              <ChatsWorkspace />
+              <ChatLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<ChatEmptyPage />} />
+          <Route path=":threadId" element={<ChatThreadPage />} />
+        </Route>
         <Route path="*" element={<Navigate to="/chats" replace />} />
       </Routes>
     </BrowserRouter>
