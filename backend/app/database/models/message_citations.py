@@ -37,7 +37,7 @@ class MessageCitation(Base, UUIDPrimaryKeyMixin):
     form: Mapped[str] = mapped_column(String(16), nullable=False)
     filing_date: Mapped[str] = mapped_column(String(32), nullable=False)
     page: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    section: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    section: Mapped[str | None] = mapped_column(Text, nullable=True)
     excerpt: Mapped[str] = mapped_column(Text, nullable=False)
 
     message: Mapped["ChatMessage"] = relationship(back_populates="citations")

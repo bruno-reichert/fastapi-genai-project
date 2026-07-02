@@ -90,11 +90,11 @@ Goal: end-to-end chat UI streaming from FastAPI, no real retrieval yet.
 
 **Frontend**
 
-- [] React Router: login, chat list, chat thread routes
-- [] AI SDK chat primitives pointed at `POST /chat/stream` with Supabase bearer token
-- [] Thread sidebar (past conversations)
-- [] Basic message list + input + streaming indicator
-- [] Verify: create thread, send message, see streamed stub response, reload and see history
+- [X] React Router: login, chat list, chat thread routes
+- [X] AI SDK chat primitives pointed at `POST /chat/stream` with Supabase bearer token
+- [X] Thread sidebar (past conversations)
+- [X] Basic message list + input + streaming indicator
+- [X] Verify: create thread, send message, see streamed stub response, reload and see history
 
 ---
 
@@ -102,17 +102,17 @@ Goal: end-to-end chat UI streaming from FastAPI, no real retrieval yet.
 
 Goal: SEC filings in the corpus are parsed, chunked, embedded, and stored in Supabase.
 
-- [] `ingest/` scripts (or CLI entrypoint) for one-off corpus loading
-- [] HTML → normalized Markdown extraction (preserve page/section metadata)
-- [] Chunking strategy (size + overlap; store chunk index, page, section, ticker, filing type, year)
-- [] Write `source_documents` rows with filing metadata from `manifest.json`
-- [] Write `document_chunks` rows with text + metadata
-- [] OpenAI embedding generation → store `vector(1536)` per chunk
-- [] Generated `tsvector` populated for full-text search
-- [] Idempotent re-run (skip already-ingested documents)
-- [] Unit tests: chunking logic, metadata extraction
-- [] Run ingestion on full sample corpus (25 filings × 5 companies)
-- [] Verify: chunks exist in Supabase; spot-check a known passage (e.g. Apple revenue mix table)
+- [X] `ingest/` scripts (or CLI entrypoint) for one-off corpus loading
+- [X] HTML → normalized Markdown extraction (preserve page/section metadata)
+- [X] Chunking strategy (size + overlap; store chunk index, page, section, ticker, filing type, year)
+- [X] Write `source_documents` rows with filing metadata from `manifest.json`
+- [X] Write `document_chunks` rows with text + metadata
+- [X] OpenAI embedding generation → store `vector(384)` per chunk
+- [X] Generated `tsvector` populated for full-text search
+- [X] Idempotent re-run (skip already-ingested documents)
+- [X] Unit tests: chunking logic, metadata extraction
+- [X] Run ingestion on full sample corpus (25 filings × 5 companies)
+- [X] Verify: chunks exist in Supabase; spot-check a known passage (e.g. Apple revenue mix table)
 
 ---
 

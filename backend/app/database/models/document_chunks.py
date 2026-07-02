@@ -32,14 +32,13 @@ class DocumentChunk(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     page: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    section: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    section: Mapped[str | None] = mapped_column(Text, nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     token_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     embedding: Mapped[list[float] | None] = mapped_column(
         Vector(settings.openai_embedding_dimensions),
         nullable=True,
     )
-    # Generated tsvector column — migration adds GENERATED ALWAYS AS (...) STORED
     search_vector: Mapped[str | None] = mapped_column(TSVECTOR, nullable=True)
     ticker: Mapped[str] = mapped_column(String(16), nullable=False)
     company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
