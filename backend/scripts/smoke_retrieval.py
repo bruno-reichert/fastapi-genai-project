@@ -1,0 +1,32 @@
+"""Print top retrieval hits for sample queries. Run using: uv run python scripts/smoke_retrieval.py"""
+
+from __future__ import annotations
+
+from app.retrieval.retriever import DocumentRetriever
+from app.retrieval.types import SearchFilters, format_passages_for_agent
+
+SMOKE_QUERIES: list[tuple[str, SearchFilters | None]] = [
+    (
+        "Across Apple's 10-Ks, how did the revenue mix between iPhone, Services, Mac, and iPad change?",
+        SearchFilters(ticker="AAPL"),
+    ),
+    (
+        "How did NVIDIA describe demand drivers and customer concentration for its Data Center business?",
+        SearchFilters(ticker="NVDA"),
+    ),
+]
+
+
+def main() -> None:
+    retriever = DocumentRetriever()
+    for query, filters in SMOKE_QUERIES:
+        print("\n" + "=" * 80)
+        print(f"Query: {query}")
+        if filters is not None:
+            print(f"Filters: {filters.model_dump_json()}")
+        passages = retriever.search(query, filters=filters, top_k=5)
+        print(format_passages_for_agent(passages))
+
+
+if __name__ == "__main__":
+    main()

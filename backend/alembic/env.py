@@ -7,16 +7,16 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-    import sys
+# def run_migrations_online() -> None:
+#     """Run migrations in 'online' mode."""
+#     import sys
     
-    # 💡 On Windows, force the loop factory to use SelectorEventLoop instead of the deprecated policy hook
-    if sys.platform == "win32":
-        from asyncio import SelectorEventLoop
-        asyncio.run(run_async_migrations(), loop_factory=SelectorEventLoop)
-    else:
-        asyncio.run(run_async_migrations())
+#     # 💡 On Windows, force the loop factory to use SelectorEventLoop instead of the deprecated policy hook
+#     if sys.platform == "win32":
+#         from asyncio import SelectorEventLoop
+#         asyncio.run(run_async_migrations(), loop_factory=SelectorEventLoop)
+#     else:
+#         asyncio.run(run_async_migrations())
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
