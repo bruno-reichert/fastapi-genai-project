@@ -54,7 +54,13 @@ async def test_agent_turn():
     if answer.citations:
         print("Citations:")
         for citation in answer.citations:
-            passage = registry.passages_by_chunk_id.get(citation.chunk_id)
+            # Safely parse the string chunk_id to UUID to match the registry dictionary keys
+            try:
+                parsed_id = uuid.UUID(citation.chunk_id.strip())
+                passage = registry.passages_by_chunk_id.get(parsed_id)
+            except ValueError:
+                passage = None
+
             source = f"{passage.ticker} {passage.form} p.{passage.page}" if passage else "Unknown Source"
             print(f"  [{citation.citation_index}] Source: {source}")
             print(f"      Excerpt: \"{citation.excerpt}\"")

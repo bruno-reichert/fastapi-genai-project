@@ -134,18 +134,18 @@ Goal: a user question returns ranked, relevant source passages.
 
 Goal: grounded answers with enforced citations — the core product contract.
 
-- [] `assistant/instructions.md` — product contract (cite everything, refuse to invent, no stock picks)
-- [] PydanticAI agent with typed deps (`DocumentAgentDeps`) and output (`GroundedAnswer`)
-- [] Agent tools: `search_filings`, `read_chunk`, `read_surrounding_chunks`
-- [] `chat/orchestrator.py` — one turn: retrieve → agent → validate → stream → persist
-- [] `grounding/validator.py` — every citation maps to a retrieved passage; fail closed on violation
-- [] `chat/streaming.py` — AI SDK-compatible stream (text deltas + citation metadata parts)
-- [] Persist `message_citations` linked to assistant messages
-- [] Unit tests: citation validation, grounding enforcement, message conversion
-- [] Verify against [client-brief example questions](client-brief.md#example-analyst-questions):
-  - [] Answers cite specific filings and pages
-  - [] Under-specified questions get "not enough evidence" responses
-  - [] Question 10 (generative AI margins) refuses to infer beyond filings
+- [X] `assistant/instructions.md` — product contract (cite everything, refuse to invent, no stock picks)
+- [X] PydanticAI agent with typed deps (`DocumentAgentDeps`) and output (`GroundedAnswer`)
+- [X] Agent tools: `search_filings`, `read_chunk`, `read_surrounding_chunks`
+- [X] `chat/orchestrator.py` — one turn: retrieve → agent → validate → stream → persist
+- [X] `grounding/validator.py` — every citation maps to a retrieved passage; fail closed on violation
+- [X] `chat/streaming.py` — AI SDK-compatible stream (text deltas + citation metadata parts)
+- [X] Persist `message_citations` linked to assistant messages
+- [X] Unit tests: citation validation, grounding enforcement, message conversion
+- [X] Verify against [client-brief example questions](client-brief.md#example-analyst-questions):
+  - [X] Answers cite specific filings and pages
+  - [X] Under-specified questions get "not enough evidence" responses
+  - [X] Question 10 (generative AI margins) refuses to infer beyond filings
 
 ---
 
