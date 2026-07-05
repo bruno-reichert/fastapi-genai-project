@@ -4,10 +4,11 @@ import { useChat } from '@ai-sdk/react'
 import type { UIMessage } from 'ai'
 import { ChatInput } from '@/components/chat/ChatInput'
 import { MessageList } from '@/components/chat/MessageList'
+import { SourcePassageSheet } from '@/components/chat/SourcePassageSheet'
 import { useChatTransport } from '@/hooks/useChatTransport'
 import { useThreads } from '@/hooks/useThreads'
 import { getThreadMessages } from '@/lib/chat'
-import type { PipelineStatus as PipelineStatusState } from '@/lib/citations'
+import type { PipelineStatus as PipelineStatusState, CitationPayload } from '@/lib/citations'
 
 export function ChatThreadPage() {
   const { threadId } = useParams()
@@ -16,6 +17,7 @@ export function ChatThreadPage() {
   const { refreshThreads } = useThreads()
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatusState | null>(null)
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(null)
+  const [selectedCitation, setSelectedCitation] = useState<CitationPayload | null>(null)
   
   const transport = useChatTransport(threadId || '', setPipelineStatus)
 
@@ -57,6 +59,8 @@ export function ChatThreadPage() {
       initialMessages={initialMessages}
       pipelineStatus={pipelineStatus}
       setPipelineStatus={setPipelineStatus}
+      selectedCitation={selectedCitation}
+      setSelectedCitation={setSelectedCitation}
       transport={transport}
       refreshThreads={refreshThreads}
       locationState={location.state}
@@ -69,6 +73,8 @@ type ChatThreadViewProps = {
   initialMessages: UIMessage[]
   pipelineStatus: PipelineStatusState | null
   setPipelineStatus: (status: PipelineStatusState | null) => void
+  selectedCitation: CitationPayload | null
+  setSelectedCitation: (citation: CitationPayload | null) => void
   transport: any
   refreshThreads: () => Promise<void>
   locationState: any
@@ -79,6 +85,8 @@ function ChatThreadView({
   initialMessages,
   pipelineStatus,
   setPipelineStatus,
+  selectedCitation,
+  setSelectedCitation,
   transport,
   refreshThreads,
   locationState,
@@ -95,10 +103,10 @@ function ChatThreadView({
 
   function send(text: string) {
     setPipelineStatus(null)
+    setSelectedCitation(null)
     void sendMessage({ text })
   }
 
-  // Trigger prompt forwarded from home page Suggestion
   const initialPrompt = locationState?.initialPrompt
   const sentInitial = useRef(false)
   useEffect(() => {
@@ -108,14 +116,22 @@ function ChatThreadView({
   }, [initialPrompt])
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col bg-background">
       <MessageList
         messages={messages}
         status={status}
         pipelineStatus={pipelineStatus}
+        selectedCitationIndex={selectedCitation?.citationIndex ?? null}
+        onSelectCitation={setSelectedCitation}
         onSendSuggestion={send}
       />
       <ChatInput status={status} onSend={send} onStop={stop} />
+      <SourcePassageSheet
+        citation={selectedCitation}
+        onOpenChange={(open) => {
+          if (!open) setSelectedCitation(null)
+        }}
+      />
     </div>
   )
 }

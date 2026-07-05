@@ -27,7 +27,7 @@ function ChatLayoutContent() {
   return (
     <SidebarProvider>
       <ThreadSidebar />
-      <SidebarInset className="flex h-svh min-h-0 flex-col">
+      <SidebarInset className="flex h-svh min-h-0 flex-col bg-background">
         <ChatHeader />
         <div className="flex min-h-0 flex-1 flex-col">
           <Outlet />

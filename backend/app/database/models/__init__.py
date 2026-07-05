@@ -6,7 +6,7 @@ from app.database.models.chat_threads import ChatThread
 from app.database.models.document_chunks import DocumentChunk
 from app.database.models.message_citations import MessageCitation
 from app.database.models.source_documents import SourceDocument
-from app.database.models.users import User
+from app.database.models.user import User
 
 __all__ = [
     "Base",

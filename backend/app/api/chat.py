@@ -1,8 +1,9 @@
-"""FastAPI routes for chat threads and streaming."""
+"""FastAPI routes for chat threads and streaming with diagnostic logs."""
 
 from __future__ import annotations
 
 import uuid
+import traceback
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import StreamingResponse
@@ -18,6 +19,7 @@ from app.database.chats import (
     require_thread_access,
 )
 from app.database.supabase import create_user_client
+from app.database.users import ensure_user
 from app.schemas.chat import (
     CreateThreadRequest,
     MessageHistoryResponse,
@@ -34,6 +36,14 @@ async def get_threads(
     user: CurrentUser = Depends(get_current_user),
     access_token: str = Depends(get_access_token),
 ) -> ThreadListResponse:
+    print("[ROUTE] Entered GET /chat/threads", flush=True)
+    try:
+        await ensure_user(user)
+    except Exception as exc:
+        print(f"[ROUTE] EXCEPTION occurred inside GET threads -> ensure_user: {exc}", flush=True)
+        traceback.print_exc()
+        raise exc
+
     client = await create_user_client(access_token)
     threads = await list_threads(client, user)
     return ThreadListResponse(threads=threads)
@@ -45,8 +55,31 @@ async def post_thread(
     user: CurrentUser = Depends(get_current_user),
     access_token: str = Depends(get_access_token),
 ) -> ThreadResponse:
+    print("[ROUTE] Entered POST /chat/threads", flush=True)
+    print(f"[ROUTE] User context resolved: {user.email} (id: {user.id})", flush=True)
+    print(f"[ROUTE] Request Body payload: {body}", flush=True)
+    
+    try:
+        print("[ROUTE] Provisioning user profile via ensure_user...", flush=True)
+        await ensure_user(user)
+        print("[ROUTE] user profile successfully verified/provisioned!", flush=True)
+    except Exception as exc:
+        print(f"[ROUTE] EXCEPTION occurred inside POST thread -> ensure_user: {exc}", flush=True)
+        traceback.print_exc()
+        raise exc
+    
+    print("[ROUTE] Initializing user-scoped database client...", flush=True)
     client = await create_user_client(access_token)
-    return await create_thread(client, user, title=body.title)
+    
+    print(f"[ROUTE] Inserting thread row with title: {body.title!r}...", flush=True)
+    try:
+        res = await create_thread(client, user, title=body.title)
+        print("[ROUTE] Thread row successfully committed! Returning response.", flush=True)
+        return res
+    except Exception as exc:
+        print(f"[ROUTE] EXCEPTION occurred inside POST thread -> create_thread: {exc}", flush=True)
+        traceback.print_exc()
+        raise exc
 
 
 @router.get("/threads/{thread_id}/messages")

@@ -25,13 +25,13 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+        <button className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground outline-none">
           <Avatar className="h-6 w-6">
             <AvatarFallback className="text-[10px] bg-foreground text-background">
               {email.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="truncate flex-1 font-medium">{email}</span>
+          <span className="truncate flex-1 font-medium text-left">{email}</span>
           <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
         </button>
       </DropdownMenuTrigger>

@@ -14,7 +14,7 @@ export function PipelineStatus({ isSubmitted, pipelineStatus }: PipelineStatusPr
   return (
     <p
       aria-live="polite"
-      className="w-fit text-sm font-medium text-muted-foreground animate-pulse"
+      className="w-fit bg-clip-text text-sm font-medium text-transparent bg-[linear-gradient(to_right,var(--muted-foreground)_35%,var(--foreground)_50%,var(--muted-foreground)_65%)] bg-size-[200%_auto] animate-[shimmer_2.5s_linear_infinite]"
     >
       {message}
     </p>

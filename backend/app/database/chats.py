@@ -1,4 +1,4 @@
-"""Chat thread and message persistence via Supabase."""
+"""Chat thread and message persistence via Supabase with diagnostic logging."""
 
 from __future__ import annotations
 
@@ -76,19 +76,30 @@ async def create_thread(
     *,
     title: str | None = None,
 ) -> ThreadResponse:
+    print("[DB] Inside create_thread database function...", flush=True)
     thread_id = uuid.uuid4()
-    response = await (
-        client.table("chat_threads")
-        .insert(
-            {
-                "id": str(thread_id),
-                "user_id": str(user.id),
-                "title": title or DEFAULT_THREAD_TITLE,
-            }
+    print(f"[DB] Generated thread ID: {thread_id}", flush=True)
+
+    payload = {
+        "id": str(thread_id),
+        "user_id": str(user.id),
+        "title": title or DEFAULT_THREAD_TITLE,
+    }
+    print(f"[DB] Executing INSERT query on PostgREST 'chat_threads' table with payload: {payload}", flush=True)
+    
+    try:
+        response = await (
+            client.table("chat_threads")
+            .insert(payload)
+            .select("id,title,created_at,updated_at")
+            .execute()
         )
-        .select("id,title,created_at,updated_at")
-        .execute()
-    )
+        print("[DB] Database INSERT query successfully completed!", flush=True)
+    except Exception as exc:
+        print(f"[DB] Database INSERT error occurred: {exc}", flush=True)
+        raise exc
+
+    print("[DB] Mapping database response row to ThreadResponse schema...", flush=True)
     return thread_row_to_response(response.data[0])
 
 

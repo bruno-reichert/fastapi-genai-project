@@ -7,13 +7,9 @@ from typing import Any
 
 from fastapi import HTTPException, status
 
-from app.schemas.chat import (
-    CitationPart,
-    CitationPayload,
-    MessagePart,
-    TextPart,
-    UIMessage,
-)
+from app.assistant.deps import TurnRegistry
+from app.assistant.outputs import GroundedAnswer
+from app.schemas.chat import CitationPart, CitationPayload, MessagePart, TextPart, UIMessage
 
 DEFAULT_THREAD_TITLE = "New chat"
 MAX_TITLE_LENGTH = 255
@@ -71,6 +67,52 @@ def row_to_ui_message(row: dict[str, Any]) -> UIMessage:
     return UIMessage(
         id=str(row["id"]),
         role=row["role"],
+        parts=parts,
+    )
+
+
+def citation_parts_from_grounded_answer(
+    answer: GroundedAnswer,
+    registry: TurnRegistry,
+) -> list[CitationPart]:
+    parts: list[CitationPart] = []
+    for citation in answer.citations:
+        try:
+            parsed_id = uuid.UUID(str(citation.chunk_id).strip())
+            passage = registry.passages_by_chunk_id[parsed_id]
+        except (ValueError, KeyError):
+            continue
+
+        parts.append(
+            CitationPart(
+                id=str(citation.chunk_id),
+                data=CitationPayload(
+                    citation_index=citation.citation_index,
+                    chunk_id=parsed_id,
+                    excerpt=citation.excerpt,
+                    ticker=passage.ticker,
+                    company_name=passage.company_name,
+                    form=passage.form,
+                    filing_date=passage.filing_date,
+                    page=passage.page,
+                    section=passage.section,
+                ),
+            )
+        )
+    return parts
+
+
+def build_assistant_message(
+    answer: GroundedAnswer,
+    registry: TurnRegistry,
+    *,
+    message_id: uuid.UUID | None = None,
+) -> UIMessage:
+    parts: list[MessagePart] = [TextPart(text=answer.answer)]
+    parts.extend(citation_parts_from_grounded_answer(answer, registry))
+    return UIMessage(
+        id=str(message_id or uuid.uuid4()),
+        role="assistant",
         parts=parts,
     )
 

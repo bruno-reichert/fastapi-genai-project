@@ -29,14 +29,14 @@ export function ChatInput({ status, onSend, onStop }: ChatInputProps) {
 
   return (
     <div className="bg-background px-4 pb-4">
-      <div className="mx-auto w-full max-w-3xl flex items-end gap-2 border border-input rounded-xl p-2 bg-background">
+      <div className="mx-auto w-full max-w-3xl flex items-end gap-2 border border-input rounded-xl p-2 bg-background shadow-xs">
         <textarea
           rows={1}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask about SEC filings…"
-          className="flex-1 max-h-48 min-h-9 resize-none bg-transparent py-1.5 px-3 outline-none text-sm leading-relaxed"
+          className="flex-1 max-h-48 min-h-[2.25rem] resize-none bg-transparent py-2 px-3 outline-none text-sm leading-relaxed"
           disabled={isBusy}
         />
         {isBusy ? (
