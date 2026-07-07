@@ -28,7 +28,6 @@ _document_agent: Agent[DocumentAgentDeps, GroundedAnswer] | None = None
 def get_document_agent() -> Agent[DocumentAgentDeps, GroundedAnswer]:
     global _document_agent
     if _document_agent is None:
-        # Use native Groq model and provider to structure tool calls cleanly
         model = GroqModel(
             settings.openai_model_name,
             provider=GroqProvider(api_key=settings.openai_api_key),
@@ -43,14 +42,15 @@ def get_document_agent() -> Agent[DocumentAgentDeps, GroundedAnswer]:
     return _document_agent
 
 
-def run_document_agent(query: str, deps: DocumentAgentDeps) -> GroundedAnswer:
+async def run_document_agent(query: str, deps: DocumentAgentDeps) -> GroundedAnswer:
+    """Execute the document research agent natively asynchronously."""
     emit_agent_start(deps, model=settings.openai_model_name)
-    result = get_document_agent().run_sync(
+    
+    # Run fully asynchronously on the main loop
+    result = await get_document_agent().run(
         query,
         deps=deps,
         usage_limits=UsageLimits(request_limit=20),
     )
     emit_agent_done(deps)
-    
-    # PydanticAI populates .output with the validated GroundedAnswer object
     return result.output

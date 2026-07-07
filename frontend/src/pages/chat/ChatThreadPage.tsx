@@ -91,6 +91,7 @@ function ChatThreadView({
   refreshThreads,
   locationState,
 }: ChatThreadViewProps) {
+  // Use Vercel's native sendMessage function supported on your machine
   const { messages, sendMessage, status, stop } = useChat({
     id: threadId,
     messages: initialMessages,

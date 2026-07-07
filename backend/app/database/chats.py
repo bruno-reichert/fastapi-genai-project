@@ -1,24 +1,29 @@
-"""Chat thread and message persistence via Supabase with diagnostic logging."""
+"""Chat thread and message persistence via direct, high-performance SQL."""
 
 from __future__ import annotations
 
 import uuid
+import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import HTTPException, status
+from sqlalchemy import select, delete
+from sqlalchemy.orm import joinedload
 from supabase import AsyncClient
 
 from app.auth.dependencies import CurrentUser
 from app.chat.messages import (
     DEFAULT_THREAD_TITLE,
-    row_to_ui_message,
     title_from_user_message,
-    ui_message_to_insert,
 )
-from app.database.supabase import get_service_role_client
-from app.schemas.chat import CitationPart, CitationPayload, ThreadResponse, UIMessage, thread_row_to_response
+from app.database.session import get_session
+from app.database.models.chat_threads import ChatThread
+from app.database.models.chat_messages import ChatMessage, MessageRole
+from app.database.models.message_citations import MessageCitation
+from app.database.models.user import User
+from app.schemas.chat import CitationPart, CitationPayload, ThreadResponse, UIMessage
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,45 +34,48 @@ class ThreadRow:
 
 
 async def require_thread_access(thread_id: uuid.UUID, user: CurrentUser) -> ThreadRow:
-    client = await get_service_role_client()
-    response = await (
-        client.table("chat_threads")
-        .select("id,user_id,title")
-        .eq("id", str(thread_id))
-        .maybe_single()
-        .execute()
-    )
+    """Validate that the requesting user owns the targeted chat thread."""
+    def _sync_check() -> ThreadRow:
+        with get_session() as session:
+            thread = session.scalar(
+                select(ChatThread)
+                .where(ChatThread.id == thread_id)
+            )
+            if thread is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Thread not found",
+                )
+            if thread.user_id != user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Forbidden",
+                )
+            return ThreadRow(id=thread.id, user_id=thread.user_id, title=thread.title or "")
 
-    if response.data is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Thread not found",
-        )
-
-    row = response.data
-    owner_id = uuid.UUID(str(row["user_id"]))
-    if owner_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden",
-        )
-
-    return ThreadRow(
-        id=uuid.UUID(str(row["id"])),
-        user_id=owner_id,
-        title=row["title"],
-    )
+    return await asyncio.to_thread(_sync_check)
 
 
 async def list_threads(client: AsyncClient, user: CurrentUser) -> list[ThreadResponse]:
-    response = await (
-        client.table("chat_threads")
-        .select("id,title,created_at,updated_at")
-        .eq("user_id", str(user.id))
-        .order("updated_at", desc=True)
-        .execute()
-    )
-    return [thread_row_to_response(row) for row in response.data]
+    """Retrieve all chat threads associated with the authenticated user."""
+    def _sync_list() -> list[ThreadResponse]:
+        with get_session() as session:
+            threads = session.scalars(
+                select(ChatThread)
+                .where(ChatThread.user_id == user.id)
+                .order_by(ChatThread.updated_at.desc())
+            ).all()
+            return [
+                ThreadResponse(
+                    id=t.id,
+                    title=t.title or "New chat",
+                    created_at=t.created_at,
+                    updated_at=t.updated_at,
+                )
+                for t in threads
+            ]
+
+    return await asyncio.to_thread(_sync_list)
 
 
 async def create_thread(
@@ -76,35 +84,43 @@ async def create_thread(
     *,
     title: str | None = None,
 ) -> ThreadResponse:
-    print("[DB] Inside create_thread database function...", flush=True)
+    """Create a new chat thread using secure, direct SQL."""
+    print("[DB] Inside create_thread database transaction...", flush=True)
     thread_id = uuid.uuid4()
-    print(f"[DB] Generated thread ID: {thread_id}", flush=True)
-
-    payload = {
-        "id": str(thread_id),
-        "user_id": str(user.id),
-        "title": title or DEFAULT_THREAD_TITLE,
-    }
-    print(f"[DB] Executing INSERT query on PostgREST 'chat_threads' table with payload: {payload}", flush=True)
     
-    try:
-        response = await (
-            client.table("chat_threads")
-            .insert(payload)
-            .select("id,title,created_at,updated_at")
-            .execute()
-        )
-        print("[DB] Database INSERT query successfully completed!", flush=True)
-    except Exception as exc:
-        print(f"[DB] Database INSERT error occurred: {exc}", flush=True)
-        raise exc
+    def _sync_create() -> ThreadResponse:
+        with get_session() as session:
+            new_thread = ChatThread(
+                id=thread_id,
+                user_id=user.id,
+                title=title or DEFAULT_THREAD_TITLE,
+            )
+            session.add(new_thread)
+            session.commit()
+            session.refresh(new_thread)
+            
+            return ThreadResponse(
+                id=new_thread.id,
+                title=new_thread.title or "New chat",
+                created_at=new_thread.created_at,
+                updated_at=new_thread.updated_at,
+            )
 
-    print("[DB] Mapping database response row to ThreadResponse schema...", flush=True)
-    return thread_row_to_response(response.data[0])
+    res = await asyncio.to_thread(_sync_create)
+    print(f"[DB] Direct SQL create_thread successfully committed! ID: {thread_id}", flush=True)
+    return res
 
 
 async def delete_thread(client: AsyncClient, thread_id: uuid.UUID) -> None:
-    await client.table("chat_threads").delete().eq("id", str(thread_id)).execute()
+    """Permanently delete a thread and all dependent cascade records."""
+    def _sync_delete() -> None:
+        with get_session() as session:
+            session.execute(
+                delete(ChatThread).where(ChatThread.id == thread_id)
+            )
+            session.commit()
+
+    await asyncio.to_thread(_sync_delete)
 
 
 def _citation_rows_from_message(
@@ -121,9 +137,9 @@ def _citation_rows_from_message(
         data: CitationPayload = part.data
         rows.append(
             {
-                "id": str(uuid.uuid4()),
-                "message_id": message_id,
-                "chunk_id": str(data.chunk_id),
+                "id": uuid.uuid4(),
+                "message_id": uuid.UUID(message_id),
+                "chunk_id": data.chunk_id,
                 "citation_index": data.citation_index,
                 "excerpt": data.excerpt,
                 "ticker": data.ticker,
@@ -137,87 +153,77 @@ def _citation_rows_from_message(
     return rows
 
 
-async def load_messages(client: AsyncClient, thread_id: uuid.UUID) -> list[UIMessage]:
-    response = await (
-        client.table("chat_messages")
-        .select("id,role,content,parts,sequence")
-        .eq("thread_id", str(thread_id))
-        .order("sequence")
-        .execute()
-    )
-    messages = [row_to_ui_message(row) for row in response.data]
-    assistant_ids = [message.id for message in messages if message.role == "assistant" and message.id]
-    if not assistant_ids:
-        return messages
+def _row_to_ui_message(message: ChatMessage, citations: list[MessageCitation]) -> UIMessage:
+    raw_parts = message.message_json.get("parts") if message.message_json else []
+    parts: list[Any] = []
+    if raw_parts:
+        for part in raw_parts:
+            part_type = part.get("type")
+            if part_type == "text":
+                parts.append(TextPart.model_validate(part))
+    else:
+        parts.append(TextPart(text=message.content))
 
-    citations_response = await (
-        client.table("message_citations")
-        .select(
-            "message_id,citation_index,excerpt,chunk_id,ticker,company_name,form,filing_date,page,section"
-        )
-        .in_("message_id", assistant_ids)
-        .order("citation_index")
-        .execute()
-    )
-    citations_by_message: dict[str, list[dict[str, Any]]] = {}
-    for row in citations_response.data:
-        message_id = str(row["message_id"])
-        citations_by_message.setdefault(message_id, []).append(row)
-
-    hydrated: list[UIMessage] = []
-    for message in messages:
-        if message.role != "assistant" or message.id is None:
-            hydrated.append(message)
-            continue
-
-        citation_rows = citations_by_message.get(message.id, [])
-        if not citation_rows:
-            hydrated.append(message)
-            continue
-
-        existing_citation_ids = {
-            part.data.chunk_id
-            for part in message.parts
-            if isinstance(part, CitationPart)
-        }
-        parts = list(message.parts)
-        for row in citation_rows:
-            chunk_id = uuid.UUID(str(row["chunk_id"]))
-            if chunk_id in existing_citation_ids:
-                continue
-            parts.append(
-                CitationPart(
-                    id=str(chunk_id),
-                    data=CitationPayload(
-                        citation_index=int(row["citation_index"]),
-                        chunk_id=chunk_id,
-                        excerpt=row["excerpt"],
-                        ticker=row["ticker"],
-                        company_name=row.get("company_name"),
-                        form=row["form"],
-                        filing_date=row["filing_date"],
-                        page=row.get("page"),
-                        section=row.get("section"),
-                    ),
-                )
+    for citation in citations:
+        parts.append(
+            CitationPart(
+                id=str(citation.chunk_id),
+                data=CitationPayload(
+                    citation_index=citation.citation_index,
+                    chunk_id=citation.chunk_id,
+                    excerpt=citation.excerpt,
+                    ticker=citation.ticker,
+                    company_name=citation.company_name,
+                    form=citation.form,
+                    filing_date=citation.filing_date,
+                    page=citation.page,
+                    section=citation.section,
+                ),
             )
-        hydrated.append(UIMessage(id=message.id, role=message.role, parts=parts))
+        )
 
-    return hydrated
-
-
-async def get_next_sequence(client: AsyncClient, thread_id: uuid.UUID) -> int:
-    response = await (
-        client.table("chat_messages")
-        .select("sequence")
-        .eq("thread_id", str(thread_id))
-        .order("sequence", desc=True)
-        .limit(1)
-        .execute()
+    return UIMessage(
+        id=str(message.id),
+        role=message.role.value,
+        parts=parts,
     )
-    if not response.data:
+
+
+async def load_messages(client: AsyncClient, thread_id: uuid.UUID) -> list[UIMessage]:
+    """Load and hydrate message histories with integrated citations."""
+    def _sync_load() -> list[UIMessage]:
+        with get_session() as session:
+            messages = session.scalars(
+                select(ChatMessage)
+                .where(ChatMessage.thread_id == thread_id)
+                .order_by(ChatMessage.sequence)
+            ).all()
+
+            hydrated: list[UIMessage] = []
+            for msg in messages:
+                citations = []
+                if msg.role == MessageRole.ASSISTANT:
+                    citations = list(session.scalars(
+                        select(MessageCitation)
+                        .where(MessageCitation.message_id == msg.id)
+                        .order_by(MessageCitation.citation_index)
+                    ).all())
+                hydrated.append(_row_to_ui_message(msg, citations))
+            return hydrated
+
+    return await asyncio.to_thread(_sync_load)
+
+
+async def get_next_sequence(session: Any, thread_id: uuid.UUID) -> int:
+    row = session.execute(
+        select(ChatMessage.sequence)
+        .where(ChatMessage.thread_id == thread_id)
+        .order_by(ChatMessage.sequence.desc())
+        .limit(1)
+    ).first()
+    if not row:
         return 0
-    return int(response.data[0]["sequence"]) + 1
+    return int(row[0]) + 1
 
 
 async def append_grounded_turn(
@@ -228,33 +234,71 @@ async def append_grounded_turn(
     assistant_message: UIMessage,
     thread_title: str,
 ) -> None:
-    next_sequence = await get_next_sequence(client, thread_id)
-    rows = [
-        ui_message_to_insert(
-            user_message,
-            thread_id=thread_id,
-            sequence=next_sequence,
-        ),
-        ui_message_to_insert(
-            assistant_message,
-            thread_id=thread_id,
-            sequence=next_sequence + 1,
-            message_id=uuid.UUID(assistant_message.id) if assistant_message.id else None,
-        ),
-    ]
-    await client.table("chat_messages").insert(rows).execute()
+    """Save user and assistant messages with integrated citations using direct SQL."""
+    def _sync_append() -> None:
+        with get_session() as session:
+            next_sequence = session.execute(
+                select(ChatMessage.sequence)
+                .where(ChatMessage.thread_id == thread_id)
+                .order_by(ChatMessage.sequence.desc())
+                .limit(1)
+            ).first()
+            seq = int(next_sequence[0]) + 1 if next_sequence else 0
 
-    citation_rows = _citation_rows_from_message(assistant_message)
-    if citation_rows:
-        await client.table("message_citations").insert(citation_rows).execute()
+            # 1. Insert user message
+            user_text = "".join(p.text for p in user_message.parts if isinstance(p, TextPart))
+            user_row = ChatMessage(
+                id=uuid.uuid4(),
+                thread_id=thread_id,
+                role=MessageRole.USER,
+                sequence=seq,
+                content=user_text,
+                message_json={
+                    "parts": [p.model_dump(by_alias=True, mode="json") for p in user_message.parts]
+                }
+            )
+            session.add(user_row)
 
-    updates: dict[str, Any] = {"updated_at": datetime.now(UTC).isoformat()}
-    if thread_title == DEFAULT_THREAD_TITLE:
-        updates["title"] = title_from_user_message(user_message)
+            # 2. Insert assistant message
+            assistant_text = "".join(p.text for p in assistant_message.parts if isinstance(p, TextPart))
+            assistant_row = ChatMessage(
+                id=uuid.UUID(assistant_message.id) if assistant_message.id else uuid.uuid4(),
+                thread_id=thread_id,
+                role=MessageRole.ASSISTANT,
+                sequence=seq + 1,
+                content=assistant_text,
+                message_json={
+                    "parts": [p.model_dump(by_alias=True, mode="json") for p in assistant_message.parts if isinstance(p, TextPart)]
+                }
+            )
+            session.add(assistant_row)
 
-    await (
-        client.table("chat_threads")
-        .update(updates)
-        .eq("id", str(thread_id))
-        .execute()
-    )
+            # 3. Insert citations
+            citation_rows = _citation_rows_from_message(assistant_message)
+            for row in citation_rows:
+                session.add(
+                    MessageCitation(
+                        id=row["id"],
+                        message_id=assistant_row.id,
+                        chunk_id=row["chunk_id"],
+                        citation_index=row["citation_index"],
+                        excerpt=row["excerpt"],
+                        ticker=row["ticker"],
+                        company_name=row["company_name"],
+                        form=row["form"],
+                        filing_date=datetime.strptime(row["filing_date"], "%Y-%m-%d").date(),
+                        page=row["page"],
+                        section=row["section"],
+                    )
+                )
+
+            # 4. Update thread title if needed
+            thread = session.scalar(select(ChatThread).where(ChatThread.id == thread_id))
+            if thread:
+                thread.updated_at = datetime.now(UTC)
+                if thread.title == DEFAULT_THREAD_TITLE:
+                    thread.title = title_from_user_message(user_message)
+
+            session.commit()
+
+    await asyncio.to_thread(_sync_append)

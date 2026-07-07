@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+import traceback
 from collections.abc import AsyncIterator
 from supabase import AsyncClient
 
@@ -51,8 +52,18 @@ async def run_turn(
     thread_title: str,
 ) -> AsyncIterator[str]:
     loop = asyncio.get_running_loop()
+    
+    # 1. Log the incoming parsed message and query extraction metrics
+    print("\n" + "="*50)
+    print("[ORCHESTRATOR] Entering run_turn generator", flush=True)
+    print(f"[ORCHESTRATOR] Thread ID: {thread_id}", flush=True)
+    print(f"[ORCHESTRATOR] User Message: {user_message.model_dump_json() if hasattr(user_message, 'model_dump_json') else user_message}", flush=True)
     query = text_from_parts(user_message.parts).strip()
+    print(f"[ORCHESTRATOR] Extracted Query text: {query!r}", flush=True)
+    print("="*50 + "\n")
+
     if not query:
+        print("[ORCHESTRATOR] Extracted query is empty! Aborting stream turn immediately.", flush=True)
         async for event in stream_error("User message is empty."):
             yield event
         return
@@ -65,6 +76,7 @@ async def run_turn(
     validation = None
 
     for attempt in range(1, MAX_VALIDATION_ATTEMPTS + 1):
+        print(f"[ORCHESTRATOR] Starting generation attempt {attempt}/{MAX_VALIDATION_ATTEMPTS}...", flush=True)
         registry = TurnRegistry()
         status_queue = asyncio.Queue()
 
@@ -78,28 +90,38 @@ async def run_turn(
             user_id=user.id,
             on_status=on_status,
         )
+        
+        # Native async task dispatch on the main event loop
         agent_task = asyncio.create_task(
-            asyncio.to_thread(run_document_agent, query, deps)
+            run_document_agent(query, deps)
         )
 
         async for event in _yield_status_updates(status_queue, agent_task):
             yield event
 
         try:
+            print(f"[ORCHESTRATOR] Awaiting agent task for attempt {attempt}...", flush=True)
             grounded = await agent_task
+            print(f"[ORCHESTRATOR] Agent task for attempt {attempt} completed successfully!", flush=True)
         except Exception as exc:
+            print(f"[ORCHESTRATOR] EXCEPTION inside agent task for attempt {attempt}: {exc}", flush=True)
+            traceback.print_exc()
             async for event in stream_error(f"Assistant run failed: {exc}"):
                 yield event
             return
 
+        print(f"[ORCHESTRATOR] Verifying citations for attempt {attempt}...", flush=True)
         async for event in stream_status("verifying", "Verifying citations…"):
             yield event
 
         grounded = prune_unreferenced_citations(grounded)
         validation = await GroundingValidator().validate(grounded, registry)
+        print(f"[ORCHESTRATOR] Grounding validation result for attempt {attempt}: ok={validation.ok}, error={validation.error}", flush=True)
+        
         if validation.ok or attempt == MAX_VALIDATION_ATTEMPTS:
             break
 
+        print(f"[ORCHESTRATOR] Grounding validation failed on attempt {attempt}. Retrying...", flush=True)
         async for event in stream_status(
             "retrying",
             "Could not fully verify citations; retrying with stricter grounding…",
@@ -115,6 +137,7 @@ async def run_turn(
         async for event in stream_status("streaming", "Preparing answer…"):
             yield event
 
+    print("[ORCHESTRATOR] Commencing streaming answer response and database persistence...", flush=True)
     async for event in stream_grounded_turn_and_persist(
         client=client,
         thread_id=thread_id,
@@ -125,3 +148,4 @@ async def run_turn(
         validation=validation,
     ):
         yield event
+    print("[ORCHESTRATOR] Successfully finished streaming and database writes!", flush=True)
