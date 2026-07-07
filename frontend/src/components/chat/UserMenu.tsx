@@ -9,12 +9,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useSidebar } from '@/components/ui/sidebar'
 import { useSession } from '@/hooks/useSession'
 import { supabase } from '@/lib/supabase'
 
 export function UserMenu() {
   const navigate = useNavigate()
   const session = useSession()
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
   const email = session?.user?.email ?? 'Account'
 
   async function handleSignOut() {
@@ -25,17 +28,21 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground outline-none">
-          <Avatar className="h-6 w-6">
-            <AvatarFallback className="text-[10px] bg-foreground text-background">
+        <button className="flex w-full items-center gap-2 rounded-md p-1.5 text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground outline-none justify-center transition-colors duration-150">
+          <Avatar className="h-6 w-6 shrink-0">
+            <AvatarFallback className="text-[9px] font-bold bg-foreground text-background leading-none select-none">
               {email.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="truncate flex-1 font-medium text-left">{email}</span>
-          <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
+          {!isCollapsed && (
+            <>
+              <span className="truncate flex-1 font-medium text-left">{email}</span>
+              <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
+            </>
+          )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end">
+      <DropdownMenuContent className="w-56" align={isCollapsed ? "start" : "end"} side="right" sideOffset={12}>
         <DropdownMenuLabel className="truncate font-normal text-muted-foreground">
           {email}
         </DropdownMenuLabel>

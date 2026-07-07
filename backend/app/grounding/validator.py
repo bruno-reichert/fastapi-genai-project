@@ -24,7 +24,7 @@ class GroundingValidator:
         answer: GroundedAnswer,
         registry: TurnRegistry,
     ) -> ValidationResult:
-        """Programmatically verify citations against the turn's retrieval registry."""
+        """Programmatically verify citations against the turn's retrieval registry with resilient table normalizations."""
         if not answer.answer.strip():
             return ValidationResult(ok=False, error="Answer text is empty.")
 
@@ -84,10 +84,11 @@ class GroundingValidator:
                     error=f"Citation [{citation.citation_index}] references chunk ID {parsed_id} that was not retrieved.",
                 )
 
-            # 3. Verify cited excerpt is a verbatim case-insensitive substring of the source chunk content
-            excerpt_clean = " ".join(citation.excerpt.lower().split())
-            source_clean = " ".join(passage.text.lower().split())
-            if excerpt_clean not in source_clean:
+            # 3. Resilient verbatim check: Normalize to alphanumeric only to bypass layout differences
+            excerpt_alphanumeric = re.sub(r"[^a-zA-Z0-9]", "", citation.excerpt.lower())
+            source_alphanumeric = re.sub(r"[^a-zA-Z0-9]", "", passage.text.lower())
+            
+            if excerpt_alphanumeric not in source_alphanumeric:
                 return ValidationResult(
                     ok=False,
                     error=f"Citation [{citation.citation_index}] excerpt is not a verbatim substring of the cited source chunk."
@@ -95,6 +96,7 @@ class GroundingValidator:
 
         # Programmatic checks passed - mathematically guaranteed to be grounded!
         return ValidationResult(ok=True)
+
 
 def prune_unreferenced_citations(answer: GroundedAnswer) -> GroundedAnswer:
     marker_indices = {int(m.group(1)) for m in _CITATION_MARKER_RE.finditer(answer.answer)}

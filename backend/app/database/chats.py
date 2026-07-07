@@ -23,7 +23,7 @@ from app.database.models.chat_threads import ChatThread
 from app.database.models.chat_messages import ChatMessage, MessageRole
 from app.database.models.message_citations import MessageCitation
 from app.database.models.user import User
-from app.schemas.chat import CitationPart, CitationPayload, ThreadResponse, UIMessage
+from app.schemas.chat import CitationPart, CitationPayload, TextPart, ThreadResponse, UIMessage
 
 
 @dataclass(frozen=True, slots=True)
