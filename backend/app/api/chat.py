@@ -1,13 +1,13 @@
-"""FastAPI routes for chat threads and streaming with diagnostic logs and stream interceptors."""
+"""FastAPI routes for chat threads and streaming with structured diagnostics."""
 
 from __future__ import annotations
 
 import uuid
-import traceback
 import json
+import structlog
 from collections.abc import AsyncIterator
 
-from fastapi import APIRouter, Body, Depends, Query, Request, status, HTTPException
+from fastapi import APIRouter, Depends, Query, Request, status, HTTPException
 from fastapi.responses import StreamingResponse
 
 from app.auth.dependencies import CurrentUser, get_access_token, get_current_user
@@ -31,24 +31,24 @@ from app.schemas.chat import (
 )
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+logger = structlog.get_logger()
 
 
 def sse_event(payload: dict[str, object]) -> str:
     return f"data: {json.dumps(payload, separators=(',', ':'), default=str)}\n\n"
 
 
-async def safe_stream_wrapper(generator: AsyncIterator[str]) -> AsyncIterator[str]:
-    """Intercept any exceptions raised during active streaming and print the traceback."""
+async def safe_stream_wrapper(generator: AsyncIterator[str], thread_id: uuid.UUID) -> AsyncIterator[str]:
+    """Intercept any exceptions raised during active streaming and log natively."""
     try:
         async for event in generator:
             yield event
     except Exception as exc:
-        print("\n" + "="*50)
-        print(f"[STREAM EXCEPTION] An unhandled error occurred during active streaming: {exc}", flush=True)
-        traceback.print_exc()
-        print("="*50 + "\n")
-        
-        # Safely yield an error event to the browser before closing the socket
+        logger.exception(
+            "unhandled_stream_exception",
+            thread_id=str(thread_id),
+            error=str(exc),
+        )
         yield sse_event({"type": "error", "errorText": f"Streaming error: {exc}"})
 
 
@@ -57,12 +57,11 @@ async def get_threads(
     user: CurrentUser = Depends(get_current_user),
     access_token: str = Depends(get_access_token),
 ) -> ThreadListResponse:
-    print("[ROUTE] Entered GET /chat/threads", flush=True)
+    logger.info("get_threads_triggered", user_id=str(user.id), email=user.email)
     try:
         await ensure_user(user)
     except Exception as exc:
-        print(f"[ROUTE] EXCEPTION occurred inside GET threads -> ensure_user: {exc}", flush=True)
-        traceback.print_exc()
+        logger.exception("get_threads_provision_failed", user_id=str(user.id), error=str(exc))
         raise exc
 
     client = await create_user_client(access_token)
@@ -76,43 +75,34 @@ async def post_thread(
     user: CurrentUser = Depends(get_current_user),
     access_token: str = Depends(get_access_token),
 ) -> ThreadResponse:
-    print("[ROUTE] Entered POST /chat/threads with raw Request object", flush=True)
-    print(f"[ROUTE] User context resolved: {user.email} (id: {user.id})", flush=True)
+    logger.info("post_thread_triggered", user_id=str(user.id), email=user.email)
     
     try:
         body_json = await request.json()
-        print(f"[ROUTE] DIRECT PAYLOAD LOG -> Received JSON: {body_json}", flush=True)
         payload = CreateThreadRequest.model_validate(body_json)
-        print(f"[ROUTE] Pydantic validation successful: {payload}", flush=True)
     except Exception as exc:
-        print(f"[ROUTE] EXCEPTION occurred during manual JSON body parsing: {exc}", flush=True)
-        traceback.print_exc()
+        logger.error("post_thread_parsing_failed", user_id=str(user.id), error=str(exc))
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Could not parse or validate request payload."
         )
     
     try:
-        print("[ROUTE] Provisioning user profile via ensure_user...", flush=True)
         await ensure_user(user)
-        print("[ROUTE] user profile successfully verified/provisioned!", flush=True)
     except Exception as exc:
-        print(f"[ROUTE] EXCEPTION occurred inside POST thread -> ensure_user: {exc}", flush=True)
-        traceback.print_exc()
+        logger.exception("post_thread_provision_failed", user_id=str(user.id), error=str(exc))
         raise exc
     
-    print("[ROUTE] Initializing user-scoped database client...", flush=True)
     client = await create_user_client(access_token)
-    
     title = payload.title if payload else None
-    print(f"[ROUTE] Inserting thread row with title: {title!r}...", flush=True)
+    
+    logger.info("post_thread_db_insert", user_id=str(user.id), title=title)
     try:
         res = await create_thread(client, user, title=title)
-        print("[ROUTE] Thread row successfully committed! Returning response.", flush=True)
+        logger.info("post_thread_success", user_id=str(user.id), thread_id=str(res.id))
         return res
     except Exception as exc:
-        print(f"[ROUTE] EXCEPTION occurred inside POST thread -> create_thread: {exc}", flush=True)
-        traceback.print_exc()
+        logger.exception("post_thread_insert_failed", user_id=str(user.id), error=str(exc))
         raise exc
 
 
@@ -149,7 +139,6 @@ async def post_stream(
     user_message = extract_last_user_message(body.messages)
     client = await create_user_client(access_token)
 
-    # Wrap the generator inside the safe exception interceptor before streaming
     generator = run_turn(
         client=client,
         thread_id=body.thread_id,
@@ -159,6 +148,6 @@ async def post_stream(
     )
     
     return StreamingResponse(
-        safe_stream_wrapper(generator),
+        safe_stream_wrapper(generator, body.thread_id),
         media_type="text/event-stream",
     )

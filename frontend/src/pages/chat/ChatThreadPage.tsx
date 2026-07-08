@@ -26,6 +26,8 @@ export function ChatThreadPage() {
     let mounted = true
 
     async function load() {
+      // Clear the stale history cache immediately to prevent cross-thread leakage
+      setInitialMessages(null)
       try {
         const msgs = await getThreadMessages(threadId!)
         if (mounted) {
@@ -47,7 +49,7 @@ export function ChatThreadPage() {
 
   if (initialMessages === null) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
+      <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground bg-background">
         Loading conversation history…
       </div>
     )
@@ -55,6 +57,7 @@ export function ChatThreadPage() {
 
   return (
     <ChatThreadView
+      key={threadId} // Forces complete component unmount and re-mount on thread selection change
       threadId={threadId}
       initialMessages={initialMessages}
       pipelineStatus={pipelineStatus}
@@ -91,7 +94,6 @@ function ChatThreadView({
   refreshThreads,
   locationState,
 }: ChatThreadViewProps) {
-  // Use Vercel's native sendMessage function supported on your machine
   const { messages, sendMessage, status, stop } = useChat({
     id: threadId,
     messages: initialMessages,

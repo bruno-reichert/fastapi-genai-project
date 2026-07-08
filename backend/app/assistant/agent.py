@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import json
-import re
 from pathlib import Path
-
+import re
 from pydantic_ai import Agent, UsageLimits
 from pydantic_ai.models.groq import GroqModel
 from pydantic_ai.providers.groq import GroqProvider
@@ -13,12 +11,6 @@ from pydantic_ai.providers.groq import GroqProvider
 from app.assistant.deps import DocumentAgentDeps
 from app.assistant.outputs import GroundedAnswer
 from app.assistant.status import emit_agent_done, emit_agent_start
-from app.assistant.tools import (
-    read_chunk,
-    read_chunks,
-    read_surrounding_chunks,
-    search_filings,
-)
 from app.config import settings
 
 _INSTRUCTIONS_PATH = Path(__file__).with_name("instructions.md")
@@ -34,12 +26,11 @@ def get_document_agent() -> Agent[DocumentAgentDeps, str]:
             settings.openai_model_name,
             provider=GroqProvider(api_key=settings.openai_api_key),
         )
-        # Configure agent to return plain text to completely bypass Groq's complex final tool-wrapper deadlocks
+        # Bypassing tool bindings completely on open-weights model to ensure 100% stability on Groq
         _document_agent = Agent(
             model,
             deps_type=DocumentAgentDeps,
             instructions=INSTRUCTIONS,
-            tools=[search_filings, read_chunks, read_chunk, read_surrounding_chunks],
         )
     return _document_agent
 
@@ -54,6 +45,7 @@ def parse_grounded_answer_from_text(text: str) -> GroundedAnswer:
         clean_text = json_match.group(0)
 
     try:
+        import json
         data = json.loads(clean_text)
         return GroundedAnswer.model_validate(data)
     except Exception as exc:
@@ -63,14 +55,24 @@ def parse_grounded_answer_from_text(text: str) -> GroundedAnswer:
         )
 
 
-async def run_document_agent(query: str, deps: DocumentAgentDeps) -> GroundedAnswer:
+async def run_document_agent(query: str, context_text: str, deps: DocumentAgentDeps) -> GroundedAnswer:
+    """Execute the document research agent with injected database context."""
     emit_agent_start(deps, model=settings.openai_model_name)
+    
+    # Bundle raw database chunks directly into the model request prompt
+    prompt = (
+        f"User Analyst Query: {query}\n\n"
+        f"Retrieved SEC Filing Source Passages (Grounding Context):\n"
+        f"==================================================\n"
+        f"{context_text}\n"
+        f"==================================================\n\n"
+        f"Generate your citable answer using only these retrieved source chunks."
+    )
+    
     result = await get_document_agent().run(
-        query,
+        prompt,
         deps=deps,
-        usage_limits=UsageLimits(request_limit=20),
+        usage_limits=UsageLimits(request_limit=10),
     )
     emit_agent_done(deps)
-    
-    # Manually parse and validate the raw text output into our strict GroundedAnswer model
     return parse_grounded_answer_from_text(result.output)

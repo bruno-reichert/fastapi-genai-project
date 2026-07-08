@@ -1,10 +1,10 @@
-"""Coordinates one chat turn: status updates -> parallel retrieval -> model agent -> validate -> self-correct -> stream & persist."""
+"""Coordinates one chat turn: parallel retrieval -> model agent -> validate -> self-correct -> stream & persist."""
 
 from __future__ import annotations
 
 import asyncio
 import uuid
-import traceback
+import structlog
 from collections.abc import AsyncIterator
 from supabase import AsyncClient
 
@@ -20,27 +20,11 @@ from app.chat.streaming import (
 )
 from app.grounding.validator import GroundingValidator, prune_unreferenced_citations
 from app.retrieval.retriever import DocumentRetriever
+from app.retrieval.types import format_passages_for_agent
 from app.schemas.chat import UIMessage
 
 MAX_VALIDATION_ATTEMPTS = 2
-
-
-async def _yield_status_updates(
-    status_queue: asyncio.Queue[tuple[str, str]],
-    agent_task: asyncio.Task[GroundedAnswer],
-) -> AsyncIterator[str]:
-    while not agent_task.done():
-        try:
-            stage, message = await asyncio.wait_for(status_queue.get(), timeout=0.3)
-        except TimeoutError:
-            continue
-        async for event in stream_status(stage, message):
-            yield event
-
-    while not status_queue.empty():
-        stage, message = status_queue.get_nowait()
-        async for event in stream_status(stage, message):
-            yield event
+logger = structlog.get_logger()
 
 
 async def run_turn(
@@ -51,37 +35,73 @@ async def run_turn(
     user_message: UIMessage,
     thread_title: str,
 ) -> AsyncIterator[str]:
-    loop = asyncio.get_running_loop()
-    
-    # 1. Log the incoming parsed message and query extraction metrics
-    print("\n" + "="*50)
-    print("[ORCHESTRATOR] Entering run_turn generator", flush=True)
-    print(f"[ORCHESTRATOR] Thread ID: {thread_id}", flush=True)
-    print(f"[ORCHESTRATOR] User Message: {user_message.model_dump_json() if hasattr(user_message, 'model_dump_json') else user_message}", flush=True)
     query = text_from_parts(user_message.parts).strip()
-    print(f"[ORCHESTRATOR] Extracted Query text: {query!r}", flush=True)
-    print("="*50 + "\n")
+    
+    logger.info(
+        "run_turn_initiated",
+        thread_id=str(thread_id),
+        user_id=str(user.id),
+        query_length=len(query),
+    )
 
     if not query:
-        print("[ORCHESTRATOR] Extracted query is empty! Aborting stream turn immediately.", flush=True)
+        logger.error("run_turn_empty_query", thread_id=str(thread_id))
         async for event in stream_error("User message is empty."):
             yield event
         return
 
-    async for event in stream_status("analyzing", "Analyzing your question…"):
+    # 1. Start parallel database pre-retrieval
+    async for event in stream_status("searching", "Searching SEC filings…"):
         yield event
 
     retriever = DocumentRetriever()
+    
+    # Run the high-performance hybrid search inside Python natively
+    logger.info("executing_hybrid_search", thread_id=str(thread_id))
+    try:
+        # Resolve any active filters dynamically (e.g. scoping AAPL or NVDA)
+        ticker_filter = None
+        query_lower = query.lower()
+        if "apple" in query_lower or "aapl" in query_lower:
+            ticker_filter = "AAPL"
+        elif "nvidia" in query_lower or "nvda" in query_lower:
+            ticker_filter = "NVDA"
+        elif "microsoft" in query_lower or "msft" in query_lower:
+            ticker_filter = "MSFT"
+        elif "amazon" in query_lower or "amzn" in query_lower:
+            ticker_filter = "AMZN"
+        elif "google" in query_lower or "alphabet" in query_lower or "googl" in query_lower:
+            ticker_filter = "GOOGL"
+
+        from app.retrieval.types import SearchFilters
+        filters = SearchFilters(ticker=ticker_filter) if ticker_filter else None
+        
+        passages = retriever.search(query, filters=filters, top_k=8)
+        logger.info("hybrid_search_completed", thread_id=str(thread_id), retrieved_chunks=len(passages))
+    except Exception as exc:
+        logger.exception("hybrid_search_failed", thread_id=str(thread_id), error=str(exc))
+        async for event in stream_error(f"Search retrieval failed: {exc}"):
+            yield event
+        return
+
+    async for event in stream_status("reading", "Reading source passages…"):
+        yield event
+
     grounded: GroundedAnswer | None = None
     validation = None
 
     for attempt in range(1, MAX_VALIDATION_ATTEMPTS + 1):
-        print(f"[ORCHESTRATOR] Starting generation attempt {attempt}/{MAX_VALIDATION_ATTEMPTS}...", flush=True)
+        logger.info("generation_attempt_started", thread_id=str(thread_id), attempt=attempt)
+        
+        # Hydrate the TurnRegistry allowlist to track the pre-retrieved database passages
         registry = TurnRegistry()
+        registry.register_many(passages)
+        
+        context_text = format_passages_for_agent(passages)
         status_queue = asyncio.Queue()
 
         def on_status(stage: str, message: str) -> None:
-            loop.call_soon_threadsafe(status_queue.put_nowait, (stage, message))
+            status_queue.put_nowait((stage, message))
 
         deps = DocumentAgentDeps(
             retriever=retriever,
@@ -91,37 +111,44 @@ async def run_turn(
             on_status=on_status,
         )
         
-        # Native async task dispatch on the main event loop
+        # Native async task dispatch on main loop, receiving pre-retrieved context
         agent_task = asyncio.create_task(
-            run_document_agent(query, deps)
+            run_document_agent(query, context_text, deps)
         )
 
-        async for event in _yield_status_updates(status_queue, agent_task):
-            yield event
-
         try:
-            print(f"[ORCHESTRATOR] Awaiting agent task for attempt {attempt}...", flush=True)
+            logger.info("awaiting_agent_task", thread_id=str(thread_id), attempt=attempt)
             grounded = await agent_task
-            print(f"[ORCHESTRATOR] Agent task for attempt {attempt} completed successfully!", flush=True)
+            logger.info("generation_attempt_success", thread_id=str(thread_id), attempt=attempt)
         except Exception as exc:
-            print(f"[ORCHESTRATOR] EXCEPTION inside agent task for attempt {attempt}: {exc}", flush=True)
-            traceback.print_exc()
+            logger.exception(
+                "generation_attempt_failed",
+                thread_id=str(thread_id),
+                attempt=attempt,
+                error=str(exc),
+            )
             async for event in stream_error(f"Assistant run failed: {exc}"):
                 yield event
             return
 
-        print(f"[ORCHESTRATOR] Verifying citations for attempt {attempt}...", flush=True)
         async for event in stream_status("verifying", "Verifying citations…"):
             yield event
 
         grounded = prune_unreferenced_citations(grounded)
         validation = await GroundingValidator().validate(grounded, registry)
-        print(f"[ORCHESTRATOR] Grounding validation result for attempt {attempt}: ok={validation.ok}, error={validation.error}", flush=True)
+        
+        logger.info(
+            "grounding_validation_evaluated",
+            thread_id=str(thread_id),
+            attempt=attempt,
+            ok=validation.ok,
+            error=validation.error,
+        )
         
         if validation.ok or attempt == MAX_VALIDATION_ATTEMPTS:
             break
 
-        print(f"[ORCHESTRATOR] Grounding validation failed on attempt {attempt}. Retrying...", flush=True)
+        logger.warn("grounding_validation_failed_triggering_retry", thread_id=str(thread_id), attempt=attempt)
         async for event in stream_status(
             "retrying",
             "Could not fully verify citations; retrying with stricter grounding…",
@@ -137,7 +164,7 @@ async def run_turn(
         async for event in stream_status("streaming", "Preparing answer…"):
             yield event
 
-    print("[ORCHESTRATOR] Commencing streaming answer response and database persistence...", flush=True)
+    logger.info("commencing_stream_output_and_save", thread_id=str(thread_id))
     async for event in stream_grounded_turn_and_persist(
         client=client,
         thread_id=thread_id,
@@ -148,4 +175,4 @@ async def run_turn(
         validation=validation,
     ):
         yield event
-    print("[ORCHESTRATOR] Successfully finished streaming and database writes!", flush=True)
+    logger.info("run_turn_completed", thread_id=str(thread_id))

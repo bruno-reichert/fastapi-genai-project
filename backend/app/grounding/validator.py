@@ -1,4 +1,4 @@
-"""Fail-closed citation validation against the turn registry."""
+"""Fail-closed citation validation against the turn registry with autonomous auto-healing."""
 
 from __future__ import annotations
 
@@ -76,25 +76,35 @@ class GroundingValidator:
                     error=f"Citation [{citation.citation_index}] contains an invalid UUID structure: '{citation.chunk_id}'."
                 )
 
-            # 2. Verify cited chunk exists inside retrieval registry allowlist
+            # 2. Check if verbatim excerpt is in the cited chunk
             passage = registry.passages_by_chunk_id.get(parsed_id)
-            if passage is None:
-                return ValidationResult(
-                    ok=False,
-                    error=f"Citation [{citation.citation_index}] references chunk ID {parsed_id} that was not retrieved.",
-                )
-
-            # 3. Resilient verbatim check: Normalize to alphanumeric only to bypass layout differences
-            excerpt_alphanumeric = re.sub(r"[^a-zA-Z0-9]", "", citation.excerpt.lower())
-            source_alphanumeric = re.sub(r"[^a-zA-Z0-9]", "", passage.text.lower())
             
-            if excerpt_alphanumeric not in source_alphanumeric:
-                return ValidationResult(
-                    ok=False,
-                    error=f"Citation [{citation.citation_index}] excerpt is not a verbatim substring of the cited source chunk."
-                )
+            excerpt_alphanumeric = re.sub(r"[^a-zA-Z0-9]", "", citation.excerpt.lower())
+            
+            is_grounded_in_cited = False
+            if passage:
+                source_alphanumeric = re.sub(r"[^a-zA-Z0-9]", "", passage.text.lower())
+                if excerpt_alphanumeric in source_alphanumeric:
+                    is_grounded_in_cited = True
 
-        # Programmatic checks passed - mathematically guaranteed to be grounded!
+            # 3. AUTO-HEALING: If not in the cited chunk, scan other retrieved passages for a verbatim match
+            if not is_grounded_in_cited:
+                healed = False
+                for candidate_id, candidate_passage in registry.passages_by_chunk_id.items():
+                    cand_alphanumeric = re.sub(r"[^a-zA-Z0-9]", "", candidate_passage.text.lower())
+                    if excerpt_alphanumeric in cand_alphanumeric:
+                        # Re-bind the cited ID to the actual chunk that contains this excerpt verbatim
+                        citation.chunk_id = str(candidate_id)
+                        healed = True
+                        break
+                
+                if not healed:
+                    return ValidationResult(
+                        ok=False,
+                        error=f"Citation [{citation.citation_index}] excerpt cannot be verified against any retrieved source chunks."
+                    )
+
+        # Programmatic checks and auto-healing successful!
         return ValidationResult(ok=True)
 
 

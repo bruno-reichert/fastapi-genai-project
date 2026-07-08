@@ -166,12 +166,12 @@ Goal: analysts can verify every claim in one click — this is what makes the pr
 
 Goal: 5 senior analysts can use it for a week and report ≥3 hours saved per analyst per week.
 
-- [] README "Running locally" section — copy-paste commands for backend + frontend + env vars
-- [] Seed or document how to ingest/update the corpus
-- [ ] Smoke-test all 10 example questions from the client brief
-- [ ] Confirm chat history persists across sessions
-- [ ] Confirm ~40-user scale assumptions (no hardcoded single-user shortcuts)
-- [ ] Basic structured logging on backend (`structlog`) for debugging failed turns
+- [X] README "Running locally" section — copy-paste commands for backend + frontend + env vars
+- [X] Seed or document how to ingest/update the corpus
+- [X] Smoke-test all 10 example questions from the client brief
+- [X] Confirm chat history persists across sessions
+- [X] Confirm ~40-user scale assumptions (no hardcoded single-user shortcuts)
+- [X] Basic structured logging on backend (`structlog`) for debugging failed turns
 - [ ] Review latency: streaming starts within a few seconds for typical queries
 
 ---

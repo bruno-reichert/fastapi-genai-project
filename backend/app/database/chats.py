@@ -1,16 +1,16 @@
-"""Chat thread and message persistence via direct, high-performance SQL."""
+"""Chat thread and persistence via direct SQL with structured diagnostics."""
 
 from __future__ import annotations
 
 import uuid
 import asyncio
+import structlog
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import HTTPException, status
 from sqlalchemy import select, delete
-from sqlalchemy.orm import joinedload
 from supabase import AsyncClient
 
 from app.auth.dependencies import CurrentUser
@@ -24,6 +24,8 @@ from app.database.models.chat_messages import ChatMessage, MessageRole
 from app.database.models.message_citations import MessageCitation
 from app.database.models.user import User
 from app.schemas.chat import CitationPart, CitationPayload, TextPart, ThreadResponse, UIMessage
+
+logger = structlog.get_logger()
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,8 +87,8 @@ async def create_thread(
     title: str | None = None,
 ) -> ThreadResponse:
     """Create a new chat thread using secure, direct SQL."""
-    print("[DB] Inside create_thread database transaction...", flush=True)
     thread_id = uuid.uuid4()
+    logger.info("db_create_thread_initiated", user_id=str(user.id), thread_id=str(thread_id))
     
     def _sync_create() -> ThreadResponse:
         with get_session() as session:
@@ -106,9 +108,13 @@ async def create_thread(
                 updated_at=new_thread.updated_at,
             )
 
-    res = await asyncio.to_thread(_sync_create)
-    print(f"[DB] Direct SQL create_thread successfully committed! ID: {thread_id}", flush=True)
-    return res
+    try:
+        res = await asyncio.to_thread(_sync_create)
+        logger.info("db_create_thread_success", user_id=str(user.id), thread_id=str(thread_id))
+        return res
+    except Exception as exc:
+        logger.exception("db_create_thread_failed", user_id=str(user.id), error=str(exc))
+        raise exc
 
 
 async def delete_thread(client: AsyncClient, thread_id: uuid.UUID) -> None:
@@ -235,6 +241,8 @@ async def append_grounded_turn(
     thread_title: str,
 ) -> None:
     """Save user and assistant messages with integrated citations using direct SQL."""
+    logger.info("db_append_turn_initiated", thread_id=str(thread_id))
+    
     def _sync_append() -> None:
         with get_session() as session:
             next_sequence = session.execute(
@@ -301,4 +309,9 @@ async def append_grounded_turn(
 
             session.commit()
 
-    await asyncio.to_thread(_sync_append)
+    try:
+        await asyncio.to_thread(_sync_append)
+        logger.info("db_append_turn_success", thread_id=str(thread_id))
+    except Exception as exc:
+        logger.exception("db_append_turn_failed", thread_id=str(thread_id), error=str(exc))
+        raise exc

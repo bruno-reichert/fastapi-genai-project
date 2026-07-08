@@ -1,8 +1,10 @@
-"""FastAPI application entrypoint with global request validation debugger."""
+"""FastAPI application entrypoint with structured logging and global error handling."""
 
 from __future__ import annotations
 
-import traceback
+import logging
+import sys
+import structlog
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +13,29 @@ from fastapi.responses import JSONResponse
 from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
 from app.config import settings
+
+# Initialize standard Python logging to match structlog
+logging.basicConfig(
+    format="%(message)s",
+    stream=sys.stdout,
+    level=logging.INFO,
+)
+
+# Configure structlog to output clean, structured JSON in terminal
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
+    context_class=dict,
+    logger_factory=structlog.PrintLoggerFactory(),
+    cache_logger_on_first_use=True,
+)
+
+logger = structlog.get_logger()
 
 app = FastAPI(title="Document Copilot")
 
@@ -25,19 +50,23 @@ app.add_middleware(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc: RequestValidationError):
-    """Intercept 422 errors and print exact Pydantic validation errors and raw payloads."""
-    print("\n" + "="*50)
-    print("[SERVER] RequestValidationError Intercepted!", flush=True)
-    print(f"[SERVER] Request URL: {request.method} {request.url}", flush=True)
-    print(f"[SERVER] Validation Errors: {exc.errors()}", flush=True)
+    """Intercept validation anomalies and log metrics inside a structured JSON schema."""
+    raw_body = None
     try:
-        body = await request.body()
-        print(f"[SERVER] Raw Request Body payload: {body.decode()}", flush=True)
-    except Exception as body_exc:
-        print(f"[SERVER] Could not read raw body: {body_exc}", flush=True)
-    print("="*50 + "\n")
+        body_bytes = await request.body()
+        raw_body = body_bytes.decode("utf-8")
+    except Exception:
+        raw_body = "<failed to decode body>"
+
+    logger.error(
+        "request_validation_failed",
+        url=str(request.url),
+        method=request.method,
+        errors=exc.errors(),
+        body=raw_body,
+    )
     
-    # Sanitize bytes inside error dicts to ensure they are JSON serializable
+    # Sanitize bytes inside error dicts to ensure JSON serializable
     sanitized_errors = []
     for error in exc.errors():
         sanitized_error = dict(error)
