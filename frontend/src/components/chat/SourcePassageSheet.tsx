@@ -4,7 +4,6 @@ import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 
 import { Badge } from '@/components/ui/badge'
-import { Loader } from '@/components/ui/loader'
 import {
   Sheet,
   SheetContent,

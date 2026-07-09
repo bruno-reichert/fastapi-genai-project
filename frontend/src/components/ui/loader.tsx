@@ -20,8 +20,6 @@ export interface LoaderProps {
 }
 
 export function Loader({
-  variant = "circular",
-  size = "md",
   text,
   className,
 }: LoaderProps) {

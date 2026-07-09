@@ -1,10 +1,8 @@
 import type { ChatStatus, UIMessage } from 'ai'
 import { StickToBottom } from 'use-stick-to-bottom'
-import { ChevronDown } from 'lucide-react'
 
 import { MessageBubble } from '@/components/chat/MessageBubble'
 import { PipelineStatus } from '@/components/chat/PipelineStatus'
-import { Button } from '@/components/ui/button'
 import { textFromMessage, type CitationPayload, type PipelineStatus as PipelineStatusState } from '@/lib/citations'
 
 type MessageListProps = {

@@ -172,7 +172,7 @@ Goal: 5 senior analysts can use it for a week and report ≥3 hours saved per an
 - [X] Confirm chat history persists across sessions
 - [X] Confirm ~40-user scale assumptions (no hardcoded single-user shortcuts)
 - [X] Basic structured logging on backend (`structlog`) for debugging failed turns
-- [ ] Review latency: streaming starts within a few seconds for typical queries
+- [X] Review latency: streaming starts within a few seconds for typical queries
 
 ---
 

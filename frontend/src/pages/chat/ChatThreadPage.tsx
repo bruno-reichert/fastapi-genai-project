@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useParams, useLocation } from 'react-router-dom'
 import { useChat } from '@ai-sdk/react'
 import type { UIMessage } from 'ai'
 import { ChatInput } from '@/components/chat/ChatInput'
@@ -12,21 +12,20 @@ import type { PipelineStatus as PipelineStatusState, CitationPayload } from '@/l
 
 export function ChatThreadPage() {
   const { threadId } = useParams()
-  const navigate = useNavigate()
   const location = useLocation()
   const { refreshThreads } = useThreads()
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatusState | null>(null)
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(null)
   const [selectedCitation, setSelectedCitation] = useState<CitationPayload | null>(null)
   
-  const transport = useChatTransport(threadId || '', setPipelineStatus)
+  const transport = useChatTransport(threadId || '')
 
   useEffect(() => {
     if (!threadId) return
     let mounted = true
 
     async function load() {
-      // Clear the stale history cache immediately to prevent cross-thread leakage
+      // Clear history cache immediately on thread change to prevent mounting with stale state
       setInitialMessages(null)
       try {
         const msgs = await getThreadMessages(threadId!)
@@ -57,7 +56,7 @@ export function ChatThreadPage() {
 
   return (
     <ChatThreadView
-      key={threadId} // Forces complete component unmount and re-mount on thread selection change
+      key={threadId} // Forces complete state unmount and re-mount on navigation change
       threadId={threadId}
       initialMessages={initialMessages}
       pipelineStatus={pipelineStatus}
@@ -110,8 +109,12 @@ function ChatThreadView({
     void sendMessage({ text })
   }
 
+  // Auto-trigger prompt forwarded from Suggestion buttons
   const initialPrompt = locationState?.initialPrompt
   const sentInitial = useRef(false)
+  
+  // Custom safe ref trigger matching standard typing cycles
+  const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!initialPrompt || sentInitial.current) return
     sentInitial.current = true
@@ -129,6 +132,7 @@ function ChatThreadView({
         onSendSuggestion={send}
       />
       <ChatInput status={status} onSend={send} onStop={stop} />
+      <div ref={ref} className="h-0" />
       <SourcePassageSheet
         citation={selectedCitation}
         onOpenChange={(open) => {
@@ -138,3 +142,6 @@ function ChatThreadView({
     </div>
   )
 }
+
+// Inline helper to bypass React ref compiler scopes inside the render thread
+import { useRef } from 'react'

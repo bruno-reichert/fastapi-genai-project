@@ -5,7 +5,6 @@ import { env } from '@/lib/env'
 
 export function useChatTransport(
   threadId: string,
-  onStatus?: (status: any) => void,
 ) {
   return useMemo(
     () =>
@@ -18,7 +17,6 @@ export function useChatTransport(
         prepareSendMessagesRequest: ({ messages }) => ({
           body: { threadId, messages },
         }),
-        // Direct fetch connection - completely bypasses browser stream-tee buffer deadlocks
         fetch: async (input, init) => {
           return fetch(input, init)
         },
