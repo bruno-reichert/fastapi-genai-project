@@ -11,7 +11,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy dependency specifications first to leverage Docker layer caching
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+
+# Pass --no-cache to prevent saving duplicate installer zips on disk
+RUN uv sync --frozen --no-dev --no-install-project --no-cache
 
 # Copy application layers
 COPY alembic ./alembic
@@ -20,8 +22,8 @@ COPY app ./app
 COPY ingest ./ingest
 COPY scripts ./scripts
 
-# Perform final sync of your codebase packages
-RUN uv sync --frozen --no-dev
+# Perform final sync of your codebase packages with zero caching
+RUN uv sync --frozen --no-dev --no-cache
 
 ENV PATH="/app/.venv/bin:$PATH"
 
