@@ -13,7 +13,7 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
     try {
       const nextThreads = await listThreads()
       setThreads(nextThreads)
-    } catch (err) {
+    } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
@@ -45,7 +45,7 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
 
   const deleteThread = useCallback(async (threadId: string) => {
     await deleteThreadRequest(threadId)
-    setThreads((current) => current.filter((thread) => thread.id !== threadId))
+    setThreads((current: any) => current.filter((thread: any) => thread.id !== threadId))
   }, [])
 
   const value = useMemo(

@@ -281,7 +281,7 @@ export function SourcePassageSheet({ citation, onOpenChange }: SourcePassageShee
               ) : null}
 
               {!loading &&
-                resolvedContext?.chunks.map((chunk) => (
+                resolvedContext?.chunks.map((chunk: any) => (
                   <SourceChunkCard key={chunk.chunkId} chunk={chunk} />
                 ))}
             </div>

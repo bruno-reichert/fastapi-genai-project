@@ -74,7 +74,7 @@ export function AssistantMessage({
 
       {citations.length > 0 ? (
         <div className="flex flex-wrap gap-1.5 pt-1">
-          {citations.map((citation) => (
+          {citations.map((citation: CitationPayload) => (
             <CitationChip
               key={`${citation.chunkId}-${citation.citationIndex}`}
               citation={citation}

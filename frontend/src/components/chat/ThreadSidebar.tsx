@@ -31,7 +31,7 @@ export function ThreadSidebar() {
   const [isCreating, setIsCreating] = useState(false)
 
   const isCollapsed = state === "collapsed"
-  const groups = groupByRecency(threads, (thread) => thread.updatedAt)
+  const groups = groupByRecency(threads, (thread: any) => thread.updatedAt)
 
   async function handleNewChat() {
     setIsCreating(true)
@@ -59,7 +59,6 @@ export function ThreadSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className={cn("gap-3", isCollapsed ? "p-2 items-center" : "p-3")}>
-        {/* Render only the raw icon if collapsed, otherwise full branding */}
         {isCollapsed ? (
           <LogoMark className="size-8" />
         ) : (
@@ -84,7 +83,7 @@ export function ThreadSidebar() {
         </Button>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-1">
         {isLoading && !isCollapsed ? (
           <div className="p-4 text-xs text-muted-foreground">Loading chats...</div>
         ) : null}
@@ -94,12 +93,12 @@ export function ThreadSidebar() {
         ) : null}
 
         {!isLoading &&
-          groups.map((group) => (
+          groups.map((group: any) => (
             <SidebarGroup key={group.label}>
               <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {group.items.map((thread) => (
+                  {group.items.map((thread: any) => (
                     <SidebarMenuItem key={thread.id}>
                       <SidebarMenuButton
                         isActive={thread.id === threadId}
