@@ -34,7 +34,18 @@ export class ApiError extends Error {
 }
 
 function buildUrl(path: string): string {
-  return path.startsWith('/') ? `${env.apiBaseUrl}${path}` : `${env.apiBaseUrl}/${path}`
+  // Normalize the base URL defensively to prevent relative path mapping bugs
+  let baseUrl = env.apiBaseUrl.trim().replace(/^["']|["']$/g, '') // Strip any duplicate literal quotes from environment variables
+  
+  if (
+    !baseUrl.startsWith('http://') &&
+    !baseUrl.startsWith('https://') &&
+    !baseUrl.startsWith('//')
+  ) {
+    baseUrl = `https://${baseUrl}`
+  }
+
+  return path.startsWith('/') ? `${baseUrl}${path}` : `${baseUrl}/${path}`
 }
 
 async function parseErrorBody(response: Response): Promise<unknown> {
