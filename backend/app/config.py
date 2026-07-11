@@ -1,4 +1,4 @@
-"""Application settings — single source of truth for backend environment."""
+"""Application settings — single source of truth for backend environment with defensive CORS parsing."""
 
 from functools import lru_cache
 from pathlib import Path
@@ -29,16 +29,16 @@ class Settings(BaseSettings):
     supabase_anon_key: str
     supabase_service_role_key: str
 
-    # Postgres (Alembic + direct DB access — use session/direct host, not pooler)
+    # Postgres
     database_url: str
 
-    # OpenAI (generation + embeddings)
+    # OpenAI / Groq
     openai_api_key: str
     openai_model_name: str = "llama-3.3-70b-versatile"
     openai_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     openai_embedding_dimensions: int = 384
 
-    # Server
+    # Server CORS
     allowed_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:5173"]
     )
@@ -46,16 +46,16 @@ class Settings(BaseSettings):
     @field_validator("allowed_origins", mode="before")
     @classmethod
     def parse_allowed_origins(cls, value: str | list[str]) -> list[str]:
+        """Safely parse comma-separated origins and strip any accidental double or single quotes."""
         if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
+            # Clean up commas, and strip any accidental quotes added by env parsers
+            origins = [
+                origin.strip().replace('"', '').replace("'", "")
+                for origin in value.split(",")
+                if origin.strip()
+            ]
+            return origins
         return value
-
-    # @field_validator("database_url")
-    # @classmethod
-    # def database_url_must_be_postgres(cls, value: str) -> str:
-    #     if not value.startswith("postgresql"):
-    #         raise ValueError("DATABASE_URL must be a PostgreSQL connection string")
-    #     return value
 
 
 @lru_cache
