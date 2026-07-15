@@ -1,5 +1,15 @@
 # Document Copilot
 
+**Nota:** Este projeto foi desenvolvido a partir do tutorial de Dave Ebbelaar (https://youtu.be/qF5il_9IwME?si=jqpveg7OSjtk6E19) adaptado e implementado por mim como parte do meu aprendizado em FastAPI, RAG e engenharia de IA aplicada — incluindo uma migração completa da stack de IA original (OpenAI) para uma alternativa gratuita (Groq/Llama), detalhada na seção abaixo.
+
+_Este projeto segue o tutorial de Dave Ebbelaar (https://github.com/daveebbelaar/document-copilot/tree/development), que originalmente usa modelos pagos da OpenAI (GPT-5.5 para geração, com embeddings de 1536 dimensões). Para viabilizar o projeto sem custos, adaptei toda a stack de IA para usar o Llama 3.3 70B via GroqCloud (plano gratuito) e embeddings locais de 384 dimensões (all-MiniLM-L6-v2).
+Essa mudança trouxe desafios técnicos reais: modelos open-weight como o Llama não sustentam com a mesma confiabilidade o tool-calling nativo que o GPT-5.5 usa para buscar contexto de forma agressiva durante a geração. Depois de diversas tentativas com esse padrão, refatorei a arquitetura do agente para injetar o contexto recuperado diretamente no prompt (em vez de depender de chamadas de ferramentas), e implementei um parser próprio para extrair e validar JSON estruturado a partir da resposta bruta do modelo — já que a saída estruturada nativa também não era confiável no Groq._
+
+**Note:** This project was built from Dave Ebbelaar's tutorial (https://youtu.be/qF5il_9IwME?si=jqpveg7OSjtk6E19), adapted and implemented by me as part of my learning in FastAPI, RAG, and applied AI engineering — including a full migration of the AI stack from the original (OpenAI) to a free alternative (Groq/Llama), detailed in the section below.
+
+_This project follows Dave Ebbelaar's tutorial (https://github.com/daveebbelaar/document-copilot/tree/development), which originally uses OpenAI's paid models (GPT-5.5 for generation, with 1536-dimension embeddings). To make the project viable without cost, I adapted the entire AI stack to use Llama 3.3 70B via GroqCloud's free tier, along with local 384-dimension embeddings (all-MiniLM-L6-v2).
+This shift brought real technical challenges: open-weight models like Llama don't sustain native tool-calling as reliably as GPT-5.5 does, which the original relies on to actively fetch grounding context during generation. After several attempts with that pattern, I refactored the agent's architecture to inject retrieved context directly into the prompt instead of depending on tool calls, and implemented my own parser to extract and validate structured JSON from the model's raw output — since native structured output also wasn't reliable on Groq._
+
 An internal AI-powered RAG research assistant that lets investment analysts query a corpus of SEC financial filings in plain English and retrieve verified, fully grounded answers with interactive, clickable citation links.
 
 ---
