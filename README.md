@@ -167,6 +167,3 @@ To test specific layers of your application in isolation, run these standalone b
     uv run python scripts/smoke_assistant.py
     ```
 ```
-
-REDEPLOY BUTTON <-
-WHAT DO YOU **MEAN** INFRASTRUCTURE ERROR
