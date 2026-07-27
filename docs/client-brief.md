@@ -1,3 +1,5 @@
+# NOTA: CLIENTE FICTÍCIO CRIADO COMO PARTE DO PROJETO!!!
+
 # Client brief — Driftwood Capital
 
 ## The client
