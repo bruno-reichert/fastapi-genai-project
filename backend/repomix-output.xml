@@ -1,0 +1,5598 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: **/node_modules/**, **/dist/**, **/build/**
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+alembic/
+  versions/
+    065a6e238376_make_search_vector_generated_column.py
+    b3d99a7b670b_initial_migration.py
+    d34453dede40_alter_section_columns_to_text.py
+  env.py
+  README
+  script.py.mako
+app/
+  api/
+    auth.py
+    chat.py
+  assistant/
+    agent.py
+    deps.py
+    instructions.md
+    outputs.py
+    status.py
+    tools.py
+  auth/
+    __init__.py
+    dependencies.py
+  chat/
+    messages.py
+    orchestrator.py
+    streaming.py
+  database/
+    models/
+      __init__.py
+      chat_messages.py
+      chat_threads.py
+      document_chunks.py
+      message_citations.py
+      mixins.py
+      source_documents.py
+      user.py
+    __init__.py
+    base.py
+    chats.py
+    documents.py
+    session.py
+    supabase.py
+    users.py
+  grounding/
+    validator.py
+  retrieval/
+    __init__.py
+    embeddings.py
+    fusion.py
+    keywords.py
+    queries.py
+    retriever.py
+    types.py
+  schemas/
+    chat.py
+  __init__.py
+  config.py
+  main.py
+ingest/
+  chunk_and_embed.py
+  chunking.py
+  embeddings.py
+  load_source_documents.py
+  sec_tables.py
+scripts/
+  smoke_all_brief_questions.py
+  smoke_assistant.py
+  smoke_retrieval.py
+.dockerignore
+AGENTS.md
+alembic.ini
+Dockerfile
+pyproject.toml
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="alembic/versions/065a6e238376_make_search_vector_generated_column.py">
+"""make_search_vector_generated_column
+
+Revision ID: 065a6e238376
+Revises: d34453dede40
+Create Date: 2026-07-02 15:41:19.663089
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+
+# revision identifiers, used by Alembic.
+revision: str = '065a6e238376'
+down_revision: Union[str, Sequence[str], None] = 'd34453dede40'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    # 1. Drop the manual column
+    op.drop_column('document_chunks', 'search_vector')
+
+    # 2. Add search_vector as a Postgres generated column pointing to 'content'
+    op.execute(
+        """
+        ALTER TABLE document_chunks
+        ADD COLUMN search_vector tsvector
+        GENERATED ALWAYS AS (to_tsvector('english', content)) STORED
+        """
+    )
+
+    # 3. Create a high-performance GIN index on the generated search vector
+    op.execute(
+        """
+        CREATE INDEX ix_document_chunks_search_vector_gin
+        ON document_chunks
+        USING gin (search_vector)
+        """
+    )
+
+
+def downgrade() -> None:
+    # 1. Drop the index
+    op.execute("DROP INDEX IF EXISTS ix_document_chunks_search_vector_gin")
+
+    # 2. Drop the generated column
+    op.drop_column('document_chunks', 'search_vector')
+
+    # 3. Restore the standard nullable column
+    op.add_column(
+        'document_chunks',
+        sa.Column('search_vector', postgresql.TSVECTOR(), nullable=True)
+    )
+</file>
+
+<file path="alembic/versions/b3d99a7b670b_initial_migration.py">
+"""initial migration
+
+Revision ID: b3d99a7b670b
+Revises: 
+Create Date: 2026-06-28 15:11:07.552075
+
+"""
+from typing import Sequence, Union
+
+
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+import pgvector
+
+
+
+# revision identifiers, used by Alembic.
+revision: str = 'b3d99a7b670b'
+down_revision: Union[str, Sequence[str], None] = None
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.create_table('source_documents',
+    sa.Column('ticker', sa.String(length=16), nullable=False),
+    sa.Column('cik', sa.String(length=20), nullable=False),
+    sa.Column('company_name', sa.String(length=255), nullable=True),
+    sa.Column('form', sa.String(length=16), nullable=False),
+    sa.Column('filing_date', sa.Date(), nullable=False),
+    sa.Column('report_date', sa.Date(), nullable=True),
+    sa.Column('accession_number', sa.String(length=64), nullable=False),
+    sa.Column('primary_document', sa.String(length=255), nullable=True),
+    sa.Column('source_url', sa.Text(), nullable=False),
+    sa.Column('markdown_content', sa.Text(), nullable=False),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('accession_number', name='uq_source_documents_accession_number')
+    )
+    op.create_index('ix_source_documents_ticker_filing_date', 'source_documents', ['ticker', 'filing_date'], unique=False)
+    op.create_table('users',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('email', sa.String(length=320), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('email')
+    )
+    op.create_table('chat_threads',
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_chat_threads_user_id', 'chat_threads', ['user_id'], unique=False)
+    op.create_table('document_chunks',
+    sa.Column('source_document_id', sa.UUID(), nullable=False),
+    sa.Column('chunk_index', sa.Integer(), nullable=False),
+    sa.Column('page', sa.String(length=64), nullable=True),
+    sa.Column('section', sa.String(length=255), nullable=True),
+    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('token_count', sa.Integer(), nullable=True),
+    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=384), nullable=True),
+    sa.Column('search_vector', postgresql.TSVECTOR(), nullable=True),
+    sa.Column('ticker', sa.String(length=16), nullable=False),
+    sa.Column('company_name', sa.String(length=255), nullable=True),
+    sa.Column('form', sa.String(length=16), nullable=False),
+    sa.Column('filing_date', sa.String(length=32), nullable=False),
+    sa.Column('filing_year', sa.Integer(), nullable=True),
+    sa.Column('accession_number', sa.String(length=64), nullable=False),
+    sa.Column('metadata_json', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['source_document_id'], ['source_documents.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('source_document_id', 'chunk_index', name='uq_document_chunks_document_chunk_index')
+    )
+    op.create_index('ix_document_chunks_source_document_id', 'document_chunks', ['source_document_id'], unique=False)
+    op.create_index('ix_document_chunks_ticker', 'document_chunks', ['ticker'], unique=False)
+    op.create_table('chat_messages',
+    sa.Column('thread_id', sa.UUID(), nullable=False),
+    sa.Column('role', sa.Enum('USER', 'ASSISTANT', name='message_role', native_enum=False, length=16), nullable=False),
+    sa.Column('sequence', sa.Integer(), nullable=False),
+    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('message_json', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['thread_id'], ['chat_threads.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('thread_id', 'sequence', name='uq_chat_messages_thread_sequence')
+    )
+    op.create_index('ix_chat_messages_thread_id', 'chat_messages', ['thread_id'], unique=False)
+    op.create_table('message_citations',
+    sa.Column('message_id', sa.UUID(), nullable=False),
+    sa.Column('chunk_id', sa.UUID(), nullable=False),
+    sa.Column('citation_index', sa.Integer(), nullable=False),
+    sa.Column('ticker', sa.String(length=16), nullable=False),
+    sa.Column('company_name', sa.String(length=255), nullable=True),
+    sa.Column('form', sa.String(length=16), nullable=False),
+    sa.Column('filing_date', sa.String(length=32), nullable=False),
+    sa.Column('page', sa.String(length=64), nullable=True),
+    sa.Column('section', sa.String(length=255), nullable=True),
+    sa.Column('excerpt', sa.Text(), nullable=False),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.ForeignKeyConstraint(['chunk_id'], ['document_chunks.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['message_id'], ['chat_messages.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('message_id', 'citation_index', name='uq_message_citations_message_citation_index')
+    )
+    op.create_index('ix_message_citations_chunk_id', 'message_citations', ['chunk_id'], unique=False)
+    op.create_index('ix_message_citations_message_id', 'message_citations', ['message_id'], unique=False)
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index('ix_message_citations_message_id', table_name='message_citations')
+    op.drop_index('ix_message_citations_chunk_id', table_name='message_citations')
+    op.drop_table('message_citations')
+    op.drop_index('ix_chat_messages_thread_id', table_name='chat_messages')
+    op.drop_table('chat_messages')
+    op.drop_index('ix_document_chunks_ticker', table_name='document_chunks')
+    op.drop_index('ix_document_chunks_source_document_id', table_name='document_chunks')
+    op.drop_table('document_chunks')
+    op.drop_index('ix_chat_threads_user_id', table_name='chat_threads')
+    op.drop_table('chat_threads')
+    op.drop_table('users')
+    op.drop_index('ix_source_documents_ticker_filing_date', table_name='source_documents')
+    op.drop_table('source_documents')
+    # ### end Alembic commands ###
+</file>
+
+<file path="alembic/versions/d34453dede40_alter_section_columns_to_text.py">
+"""alter_section_columns_to_text
+
+Revision ID: d34453dede40
+Revises: b3d99a7b670b
+Create Date: 2026-07-01 16:01:31.067090
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = 'd34453dede40'
+down_revision: Union[str, Sequence[str], None] = 'b3d99a7b670b'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.alter_column('document_chunks', 'section',
+               existing_type=sa.VARCHAR(length=255),
+               type_=sa.Text(),
+               existing_nullable=True)
+    op.alter_column('message_citations', 'section',
+               existing_type=sa.VARCHAR(length=255),
+               type_=sa.Text(),
+               existing_nullable=True)
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.alter_column('message_citations', 'section',
+               existing_type=sa.Text(),
+               type_=sa.VARCHAR(length=255),
+               existing_nullable=True)
+    op.alter_column('document_chunks', 'section',
+               existing_type=sa.Text(),
+               type_=sa.VARCHAR(length=255),
+               existing_nullable=True)
+    # ### end Alembic commands ###
+</file>
+
+<file path="alembic/env.py">
+import asyncio
+import sys
+from logging.config import fileConfig
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
+
+from alembic import context
+
+# def run_migrations_online() -> None:
+#     """Run migrations in 'online' mode."""
+#     import sys
+    
+#     # 💡 On Windows, force the loop factory to use SelectorEventLoop instead of the deprecated policy hook
+#     if sys.platform == "win32":
+#         from asyncio import SelectorEventLoop
+#         asyncio.run(run_async_migrations(), loop_factory=SelectorEventLoop)
+#     else:
+#         asyncio.run(run_async_migrations())
+
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
+config = context.config
+
+# Interpret the config file for Python logging.
+# This line sets up loggers basically.
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+import os
+import sys
+from pathlib import Path
+
+# Add the backend directory to sys.path for module imports
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+
+from app.database.base import Base
+from app.config import settings
+from app.database import models  # Import your models package or individual models
+
+target_metadata = Base.metadata
+
+# other values from the config, defined by the needs of env.py,
+# can be acquired:
+# my_important_option = config.get_main_option("my_important_option")
+# ... etc.
+
+
+def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode.
+
+    This configures the context with just a URL
+    and not an Engine, though an Engine is acceptable
+    here as well.  By skipping the Engine creation
+    we don't even need a DBAPI to be available.
+
+    Calls to context.execute() here emit the given string to the
+    script output.
+
+    """
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(connection=connection, target_metadata=target_metadata)
+    with context.begin_transaction():
+        context.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        context.run_migrations()
+
+
+async def run_async_migrations() -> None:
+    """In this scenario we need to create an Engine
+    and associate a connection with the context.
+
+    """
+
+    connectable = async_engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+        url=settings.database_url,
+    )
+
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+
+    await connectable.dispose()
+
+
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+    import sys
+    
+    # On Windows, force the loop factory to use SelectorEventLoop for psycopg compatibility
+    if sys.platform == "win32":
+        from asyncio import SelectorEventLoop
+        asyncio.run(run_async_migrations(), loop_factory=SelectorEventLoop)
+    else:
+        asyncio.run(run_async_migrations())
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
+</file>
+
+<file path="alembic/README">
+Generic single-database configuration with an async dbapi.
+</file>
+
+<file path="alembic/script.py.mako">
+"""${message}
+
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+${imports if imports else ""}
+
+# revision identifiers, used by Alembic.
+revision: str = ${repr(up_revision)}
+down_revision: Union[str, Sequence[str], None] = ${repr(down_revision)}
+branch_labels: Union[str, Sequence[str], None] = ${repr(branch_labels)}
+depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    ${upgrades if upgrades else "pass"}
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    ${downgrades if downgrades else "pass"}
+</file>
+
+<file path="app/api/auth.py">
+"""FastAPI routes for user profile verification."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends
+
+from app.auth.dependencies import CurrentUser, get_current_user
+
+router = APIRouter(tags=["auth"])
+
+
+@router.get("/me")
+async def me(user: CurrentUser = Depends(get_current_user)) -> dict[str, str]:
+    return {"id": str(user.id), "email": user.email}
+</file>
+
+<file path="app/api/chat.py">
+"""FastAPI routes for chat threads and streaming with structured diagnostics."""
+
+from __future__ import annotations
+
+import uuid
+import json
+import structlog
+from collections.abc import AsyncIterator
+
+from fastapi import APIRouter, Depends, Query, Request, status, HTTPException
+from fastapi.responses import StreamingResponse
+
+from app.auth.dependencies import CurrentUser, get_access_token, get_current_user
+from app.chat.messages import extract_last_user_message
+from app.chat.orchestrator import run_turn
+from app.database.chats import (
+    create_thread,
+    delete_thread,
+    list_threads,
+    load_messages,
+    require_thread_access,
+)
+from app.database.supabase import create_user_client
+from app.database.users import ensure_user
+from app.schemas.chat import (
+    CreateThreadRequest,
+    MessageHistoryResponse,
+    StreamRequest,
+    ThreadListResponse,
+    ThreadResponse,
+)
+
+router = APIRouter(prefix="/chat", tags=["chat"])
+logger = structlog.get_logger()
+
+
+def sse_event(payload: dict[str, object]) -> str:
+    return f"data: {json.dumps(payload, separators=(',', ':'), default=str)}\n\n"
+
+
+async def safe_stream_wrapper(generator: AsyncIterator[str], thread_id: uuid.UUID) -> AsyncIterator[str]:
+    """Intercept any exceptions raised during active streaming and log natively."""
+    try:
+        async for event in generator:
+            yield event
+    except Exception as exc:
+        logger.exception(
+            "unhandled_stream_exception",
+            thread_id=str(thread_id),
+            error=str(exc),
+        )
+        yield sse_event({"type": "error", "errorText": f"Streaming error: {exc}"})
+
+
+@router.get("/threads")
+async def get_threads(
+    user: CurrentUser = Depends(get_current_user),
+    access_token: str = Depends(get_access_token),
+) -> ThreadListResponse:
+    logger.info("get_threads_triggered", user_id=str(user.id), email=user.email)
+    try:
+        await ensure_user(user)
+    except Exception as exc:
+        logger.exception("get_threads_provision_failed", user_id=str(user.id), error=str(exc))
+        raise exc
+
+    client = await create_user_client(access_token)
+    threads = await list_threads(client, user)
+    return ThreadListResponse(threads=threads)
+
+
+@router.post("/threads")
+async def post_thread(
+    request: Request,
+    user: CurrentUser = Depends(get_current_user),
+    access_token: str = Depends(get_access_token),
+) -> ThreadResponse:
+    logger.info("post_thread_triggered", user_id=str(user.id), email=user.email)
+    
+    try:
+        body_json = await request.json()
+        payload = CreateThreadRequest.model_validate(body_json)
+    except Exception as exc:
+        logger.error("post_thread_parsing_failed", user_id=str(user.id), error=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Could not parse or validate request payload."
+        )
+    
+    try:
+        await ensure_user(user)
+    except Exception as exc:
+        logger.exception("post_thread_provision_failed", user_id=str(user.id), error=str(exc))
+        raise exc
+    
+    client = await create_user_client(access_token)
+    title = payload.title if payload else None
+    
+    logger.info("post_thread_db_insert", user_id=str(user.id), title=title)
+    try:
+        res = await create_thread(client, user, title=title)
+        logger.info("post_thread_success", user_id=str(user.id), thread_id=str(res.id))
+        return res
+    except Exception as exc:
+        logger.exception("post_thread_insert_failed", user_id=str(user.id), error=str(exc))
+        raise exc
+
+
+@router.get("/threads/{thread_id}/messages")
+async def get_thread_messages(
+    thread_id: uuid.UUID,
+    user: CurrentUser = Depends(get_current_user),
+    access_token: str = Depends(get_access_token),
+) -> MessageHistoryResponse:
+    await require_thread_access(thread_id, user)
+    client = await create_user_client(access_token)
+    messages = await load_messages(client, thread_id)
+    return MessageHistoryResponse(messages=messages)
+
+
+@router.delete("/threads/{thread_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_thread_route(
+    thread_id: uuid.UUID,
+    user: CurrentUser = Depends(get_current_user),
+    access_token: str = Depends(get_access_token),
+) -> None:
+    await require_thread_access(thread_id, user)
+    client = await create_user_client(access_token)
+    await delete_thread(client, thread_id)
+
+
+@router.post("/stream")
+async def post_stream(
+    body: StreamRequest,
+    user: CurrentUser = Depends(get_current_user),
+    access_token: str = Depends(get_access_token),
+) -> StreamingResponse:
+    thread = await require_thread_access(body.thread_id, user)
+    user_message = extract_last_user_message(body.messages)
+    client = await create_user_client(access_token)
+
+    generator = run_turn(
+        client=client,
+        thread_id=body.thread_id,
+        user=user,
+        user_message=user_message,
+        thread_title=thread.title,
+    )
+    
+    return StreamingResponse(
+        safe_stream_wrapper(generator, body.thread_id),
+        media_type="text/event-stream",
+    )
+</file>
+
+<file path="app/assistant/agent.py">
+"""PydanticAI document agent definition."""
+
+from __future__ import annotations
+
+from pathlib import Path
+import re
+from pydantic_ai import Agent, UsageLimits
+from pydantic_ai.models.groq import GroqModel
+from pydantic_ai.providers.groq import GroqProvider
+
+from app.assistant.deps import DocumentAgentDeps
+from app.assistant.outputs import GroundedAnswer
+from app.assistant.status import emit_agent_done, emit_agent_start
+from app.config import settings
+
+_INSTRUCTIONS_PATH = Path(__file__).with_name("instructions.md")
+INSTRUCTIONS = _INSTRUCTIONS_PATH.read_text(encoding="utf-8")
+
+_document_agent: Agent[DocumentAgentDeps, str] | None = None
+
+
+def get_document_agent() -> Agent[DocumentAgentDeps, str]:
+    global _document_agent
+    if _document_agent is None:
+        model = GroqModel(
+            settings.openai_model_name,
+            provider=GroqProvider(api_key=settings.openai_api_key),
+        )
+        # Bypassing tool bindings completely on open-weights model to ensure 100% stability on Groq
+        _document_agent = Agent(
+            model,
+            deps_type=DocumentAgentDeps,
+            instructions=INSTRUCTIONS,
+        )
+    return _document_agent
+
+
+def parse_grounded_answer_from_text(text: str) -> GroundedAnswer:
+    """Safely extract and validate GroundedAnswer JSON from raw model text."""
+    clean_text = text.strip()
+    
+    # Locate JSON boundaries even if the model wrapped it in markdown code blocks
+    json_match = re.search(r"\{.*\}", clean_text, re.DOTALL)
+    if json_match:
+        clean_text = json_match.group(0)
+
+    try:
+        import json
+        data = json.loads(clean_text)
+        return GroundedAnswer.model_validate(data)
+    except Exception as exc:
+        raise ValueError(
+            f"Failed to parse model output as valid GroundedAnswer JSON. "
+            f"Error: {exc}. Please output raw JSON strictly matching the schema."
+        )
+
+
+async def run_document_agent(query: str, context_text: str, deps: DocumentAgentDeps) -> GroundedAnswer:
+    """Execute the document research agent with injected database context."""
+    emit_agent_start(deps, model=settings.openai_model_name)
+    
+    # Bundle raw database chunks directly into the model request prompt
+    prompt = (
+        f"User Analyst Query: {query}\n\n"
+        f"Retrieved SEC Filing Source Passages (Grounding Context):\n"
+        f"==================================================\n"
+        f"{context_text}\n"
+        f"==================================================\n\n"
+        f"Generate your citable answer using only these retrieved source chunks."
+    )
+    
+    result = await get_document_agent().run(
+        prompt,
+        deps=deps,
+        usage_limits=UsageLimits(request_limit=10),
+    )
+    emit_agent_done(deps)
+    return parse_grounded_answer_from_text(result.output)
+</file>
+
+<file path="app/assistant/deps.py">
+"""Runtime dependencies for the document agent."""
+
+from __future__ import annotations
+
+import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+
+from app.retrieval.retriever import DocumentRetriever
+from app.retrieval.types import RetrievedPassage
+
+StatusCallback = Callable[[str, str], None]
+
+
+@dataclass
+class TurnRegistry:
+    """Tracks every chunk retrieved during a turn — the citation allowlist."""
+
+    passages_by_chunk_id: dict[uuid.UUID, RetrievedPassage] = field(default_factory=dict)
+
+    def register(self, passage: RetrievedPassage) -> None:
+        self.passages_by_chunk_id[passage.chunk_id] = passage
+        for neighbor in passage.neighbors:
+            self.passages_by_chunk_id[neighbor.chunk_id] = neighbor
+
+    def register_many(self, passages: list[RetrievedPassage]) -> None:
+        for passage in passages:
+            self.register(passage)
+
+
+@dataclass
+class DocumentAgentDeps:
+    retriever: DocumentRetriever
+    registry: TurnRegistry
+    thread_id: uuid.UUID
+    user_id: uuid.UUID
+    on_status: StatusCallback | None = None
+
+    def emit_status(self, stage: str, message: str) -> None:
+        if self.on_status is not None:
+            self.on_status(stage, message)
+</file>
+
+<file path="app/assistant/instructions.md">
+You are Document Copilot, an internal SEC filing research assistant for equity analysts.
+
+## CRITICAL EXECUTION RULES
+
+- **YOU HAVE NO INTERNAL KNOWLEDGE of SEC filings.** You do not know Apple's revenue, NVIDIA's demand drivers, or Microsoft's cloud capacity constraints from your pre-training data.
+- **YOU MUST ALWAYS CALL `search_filings` AS YOUR VERY FIRST STEP.** For any user query, your absolute first action must be to execute a search using the `search_filings` tool.
+- **YOU ARE STRICTLY FORBIDDEN from generating an answer or compiling citations without calling search or read tools first.** Answering from your pre-trained memory will crash the validation parser because citations must map to actual retrieved chunk IDs.
+- **NATIVE TOOL CALLING**: When you need to search or read documents, call the standard search or read tools natively. DO NOT write their arguments as text—execute them as actual functions.
+
+## Product contract
+
+- Answer **only** from passages returned by your tools (`search_filings`, `read_chunks`, `read_chunk`, `read_surrounding_chunks`). Never invent facts, numbers, or filing language.
+- **Cite every factual claim** with `[n]` markers in the answer text that match `citation_index` in your citations list.
+- Each citation must include a **verbatim excerpt** copied from the retrieved chunk text.
+- If the corpus does not contain enough evidence, set `insufficient_evidence` to true, explain what is missing, and return an **empty** citations list. Do not fabricate citations.
+- **No stock picks**, trading recommendations, or investment advice.
+- Do not infer causation or conclusions beyond what the filings explicitly state (e.g. do not claim generative AI improved margins unless a filing directly says so).
+- Keep answers concise and analyst-friendly. Prefer direct quotes in excerpt fields.
+
+## Citation boundaries and constraints
+
+- **CRITICAL**: For every citation, you must populate the `chunk_id` field with the **exact, real UUID** of the cited chunk found inside the brackets `[...]` (e.g. `[2de8b9b7-536d-41c7-83ae-1615d2fbab83]`) as returned by your retrieval tools.
+- **NEVER MAKE UP A UUID.** Copy the ID character-for-character from the brackets of the search tool output. If you invent or alter a single letter of the UUID, the validation parser will reject your answer.
+- The `citation_index` must be unique, 1-based, and contiguous (1, 2, 3...). Every marker `[n]` in your answer text must point to an active index in your citations array.
+
+## Corpus scope
+
+- SEC 10-K and 10-Q filings for S&P 500 companies, fiscal years 2020–2025.
+- The pilot corpus includes 10-K filings for AAPL, AMZN, GOOGL, MSFT, and NVDA across fiscal years 2021–2025.
+
+## Tool usage
+
+1. Start with `search_filings` using the analyst's question. Add `ticker`, `form`, or `fiscal_years` filters when the question names a company or period. Results already include 800-character excerpts **and** neighboring chunks — use those first.
+2. Prefer `read_chunks` when you need full text for multiple chunk IDs. Pass every ID in **one** call instead of many separate `read_chunk` calls.
+3. Use `read_chunk` only for a single chunk when `read_chunks` is not appropriate.
+4. Use `read_surrounding_chunks` only when search excerpts are insufficient and you need more adjacent context than neighbors already returned.
+5. **Minimize tool rounds.** Avoid re-fetching chunks already shown in `search_filings` output. Batch reads and answer as soon as you have enough evidence.
+
+## Output format
+
+When you are ready to compile your final answer, you MUST write out your response as a **single, raw JSON block** matching this exact schema:
+
+{
+  "answer": "Plain-English answer with [n] citation markers",
+  "citations": [
+    {
+      "citation_index": 1,
+      "chunk_id": "exact-retrieved-uuid-string",
+      "excerpt": "Verbatim substring from the chunk text"
+    }
+  ],
+  "insufficient_evidence": false
+}
+
+Ensure your output is strictly valid, parseable JSON. Do not write any conversational text, descriptions, explanations, or comments outside the JSON block. Do not wrap the JSON inside markdown blocks (such as ```json or ```).
+</file>
+
+<file path="app/assistant/outputs.py">
+"""Structured output types for the document agent."""
+
+from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+
+class Citation(BaseModel):
+    citation_index: int = Field(
+        description="The 1-based index (e.g. 1, 2, 3)"
+    )
+    chunk_id: str = Field(
+        description="The exact UUID string found inside the brackets [...] of the cited chunk. Copy it character-for-character. Do not alter a single letter."
+    )
+    excerpt: str = Field(
+        description="Verbatim substring from the chunk text"
+    )
+
+
+class GroundedAnswer(BaseModel):
+    answer: str = Field(description="The answer text containing inline [n] markers")
+    citations: list[Citation] = Field(
+        default_factory=list,
+        description="The array of citations supporting the answer",
+    )
+    insufficient_evidence: bool = Field(
+        default=False,
+        description="True ONLY if the documents do not contain enough evidence",
+    )
+</file>
+
+<file path="app/assistant/status.py">
+"""Map internal agent/tool events to analyst-friendly pipeline status."""
+
+from __future__ import annotations
+
+from app.assistant.deps import DocumentAgentDeps
+
+
+def emit_tool_start(deps: DocumentAgentDeps, name: str, detail: str) -> None:
+    stage, message = _tool_start_status(name, detail)
+    deps.emit_status(stage, message)
+
+
+def emit_agent_start(deps: DocumentAgentDeps, *, model: str) -> None:
+    deps.emit_status("analyzing", "Analyzing your question…")
+
+
+def emit_agent_done(deps: DocumentAgentDeps) -> None:
+    deps.emit_status("verifying", "Verifying citations…")
+
+
+def _tool_start_status(name: str, detail: str) -> tuple[str, str]:
+    if name == "search_filings":
+        suffix = f" ({detail})" if detail != "no filters" else ""
+        return "searching", f"Searching SEC filings...{suffix}"
+    if name == "read_surrounding_chunks":
+        return "reading", "Reading surrounding context…"
+    if name in {"read_chunk", "read_chunks"}:
+        return "reading", "Reading source passages…"
+    return "reading", "Reading source documents…"
+</file>
+
+<file path="app/assistant/tools.py">
+"""Bounded agent tools over the retrieval layer."""
+
+from __future__ import annotations
+
+import asyncio
+import functools
+import uuid
+from pydantic_ai import RunContext
+
+from app.assistant.deps import DocumentAgentDeps
+from app.assistant.status import emit_tool_start
+from app.database.documents import (
+    get_chunk_with_document,
+    get_chunks_by_ids,
+    get_surrounding_chunks,
+)
+from app.database.models import DocumentChunk, SourceDocument
+from app.database.session import get_session
+from app.retrieval.types import RetrievedPassage, SearchFilters, format_passages_for_agent
+
+
+def _passage_from_chunk(
+    chunk: DocumentChunk,
+    document: SourceDocument,
+    *,
+    fusion_score: float = 0.0,
+) -> RetrievedPassage:
+    return RetrievedPassage(
+        chunk_id=chunk.id,
+        document_id=chunk.source_document_id,
+        chunk_index=chunk.chunk_index,
+        text=chunk.content,
+        page=chunk.page,
+        section=chunk.section,
+        fusion_score=fusion_score,
+        ticker=document.ticker,
+        company_name=document.company_name,
+        form=document.form,
+        filing_date=document.filing_date,
+        fiscal_year=document.filing_date.year,
+        accession_number=document.accession_number,
+        neighbors=[],
+    )
+
+
+def _parse_fiscal_years(raw: str | None) -> list[int] | None:
+    if not raw:
+        return None
+    years = [int(part.strip()) for part in raw.split(",") if part.strip()]
+    return years or None
+
+
+def _search_sync(
+    deps: DocumentAgentDeps,
+    query: str,
+    *,
+    ticker: str | None,
+    form: str | None,
+    fiscal_years: str | None,
+) -> list[RetrievedPassage]:
+    filters = SearchFilters(
+        ticker=ticker,
+        form=form,
+        fiscal_years=_parse_fiscal_years(fiscal_years),
+    )
+    return deps.retriever.search(query, filters=filters)
+
+
+def _read_chunks_sync(
+    deps: DocumentAgentDeps,
+    chunk_ids: list[uuid.UUID],
+) -> list[RetrievedPassage]:
+    with get_session() as session:
+        chunks_by_id = get_chunks_by_ids(session, chunk_ids)
+        passages: list[RetrievedPassage] = []
+        for chunk_id in chunk_ids:
+            chunk = chunks_by_id.get(chunk_id)
+            if chunk is None or chunk.source_document is None:
+                continue
+            passages.append(_passage_from_chunk(chunk, chunk.source_document))
+        return passages
+
+
+def _read_surrounding_sync(
+    deps: DocumentAgentDeps,
+    chunk_id: uuid.UUID,
+    radius: int,
+) -> list[RetrievedPassage]:
+    with get_session() as session:
+        anchor = get_chunk_with_document(session, chunk_id)
+        if anchor is None:
+            return []
+        anchor_chunk, _ = anchor
+        neighbor_chunks = get_surrounding_chunks(session, chunk_id, radius)
+        passages: list[RetrievedPassage] = []
+        for neighbor_chunk in neighbor_chunks:
+            if neighbor_chunk.source_document is None:
+                continue
+            passages.append(
+                _passage_from_chunk(neighbor_chunk, neighbor_chunk.source_document)
+            )
+        if anchor_chunk.source_document is not None:
+            passages.insert(
+                0,
+                _passage_from_chunk(anchor_chunk, anchor_chunk.source_document),
+            )
+        return passages
+
+
+async def _run_tool(
+    deps: DocumentAgentDeps,
+    name: str,
+    detail: str,
+    fn,
+    /,
+    *args,
+    **kwargs,
+):
+    emit_tool_start(deps, name, detail)
+    return await asyncio.to_thread(functools.partial(fn, *args, **kwargs))
+
+
+async def search_filings(
+    ctx: RunContext[DocumentAgentDeps],
+    query: str,
+    ticker: str | None = None,
+    form: str | None = None,
+    fiscal_years: str | None = None,
+) -> str:
+    """Search SEC filings with hybrid retrieval. Optional filters: ticker, form, fiscal_years (comma-separated)."""
+    filter_bits = [
+        bit
+        for bit in (
+            f"ticker={ticker}" if ticker else None,
+            f"form={form}" if form else None,
+            f"fiscal_years={fiscal_years}" if fiscal_years else None,
+        )
+        if bit
+    ]
+    detail = ", ".join(filter_bits) if filter_bits else "no filters"
+    passages = await _run_tool(
+        ctx.deps,
+        "search_filings",
+        detail,
+        _search_sync,
+        ctx.deps,
+        query,
+        ticker=ticker,
+        form=form,
+        fiscal_years=fiscal_years,
+    )
+    ctx.deps.registry.register_many(passages)
+    return format_passages_for_agent(passages)
+
+
+async def read_chunk(ctx: RunContext[DocumentAgentDeps], chunk_id: str) -> str:
+    """Read the full text of a specific document chunk by UUID."""
+    try:
+        parsed_id = uuid.UUID(chunk_id)
+    except ValueError:
+        return f"Error: invalid chunk_id {chunk_id!r}."
+
+    passage = await _run_tool(
+        ctx.deps,
+        "read_chunk",
+        f"chunk_id={chunk_id}",
+        _read_chunk_sync,
+        ctx.deps,
+        parsed_id,
+    )
+    if os_passage := passage:
+        ctx.deps.registry.register(os_passage)
+        return format_passages_for_agent([os_passage])
+    return f"Error: chunk {chunk_id} not found."
+
+
+def _read_chunk_sync(deps: DocumentAgentDeps, chunk_id: uuid.UUID) -> RetrievedPassage | None:
+    from app.database.documents import get_chunk_with_document
+    from app.database.session import get_session
+    with get_session() as session:
+        res = get_chunk_with_document(session, chunk_id)
+        if res is None:
+            return None
+        chunk, document = res
+        return _passage_from_chunk(chunk, document, fusion_score=0.0)
+
+
+async def read_chunks(ctx: RunContext[DocumentAgentDeps], chunk_ids: list[str]) -> str:
+    """Read the full text of multiple document chunks in one call."""
+    parsed_ids: list[uuid.UUID] = []
+    for chunk_id in chunk_ids:
+        try:
+            parsed_ids.append(uuid.UUID(chunk_id))
+        except ValueError:
+            return f"Error: invalid chunk_id {chunk_id!r}."
+
+    if not parsed_ids:
+        return "Error: chunk_ids must include at least one UUID."
+
+    passages = await _run_tool(
+        ctx.deps,
+        "read_chunks",
+        f"count={len(parsed_ids)}",
+        _read_chunks_sync,
+        ctx.deps,
+        parsed_ids,
+    )
+    if not passages:
+        return "Error: none of the requested chunks were found."
+
+    ctx.deps.registry.register_many(passages)
+    return format_passages_for_agent(passages)
+
+
+async def read_surrounding_chunks(
+    ctx: RunContext[DocumentAgentDeps],
+    chunk_id: str,
+    radius: int | None = None,
+) -> str:
+    """Read chunks before and after a given chunk within the same filing."""
+    try:
+        parsed_id = uuid.UUID(chunk_id)
+    except ValueError:
+        return f"Error: invalid chunk_id {chunk_id!r}."
+
+    resolved_radius = (
+        radius if radius is not None else 1
+    )
+    if resolved_radius < 1:
+        return "Error: radius must be 1 or greater."
+
+    passages = await _run_tool(
+        ctx.deps,
+        "read_surrounding_chunks",
+        f"chunk_id={chunk_id} radius={resolved_radius}",
+        _read_surrounding_sync,
+        ctx.deps,
+        parsed_id,
+        resolved_radius,
+    )
+    if not passages:
+        return f"Error: chunk {chunk_id} not found."
+
+    ctx.deps.registry.register_many(passages)
+    return format_passages_for_agent(passages)
+</file>
+
+<file path="app/auth/__init__.py">
+
+</file>
+
+<file path="app/auth/dependencies.py">
+"""FastAPI dependencies for Supabase JWT authentication with diagnostic logging."""
+
+from __future__ import annotations
+
+import uuid
+from dataclasses import dataclass
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from supabase import acreate_client
+from supabase.lib.client_options import AsyncClientOptions
+from supabase_auth.errors import AuthApiError
+
+from app.config import settings
+
+_bearer = HTTPBearer(auto_error=False)
+
+
+@dataclass(frozen=True, slots=True)
+class CurrentUser:
+    id: uuid.UUID
+    email: str
+
+
+def _unauthorized(detail: str = "Not authenticated") -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+async def get_access_token(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+) -> str:
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise _unauthorized()
+
+    token = credentials.credentials.strip()
+    if not token:
+        raise _unauthorized()
+
+    return token
+
+
+async def get_current_user(
+    access_token: str = Depends(get_access_token),
+) -> CurrentUser:
+    print("[AUTH] Resolving get_current_user dependency...", flush=True)
+    
+    # Initialize requesting client
+    headers = {"Authorization": f"Bearer {access_token}"}
+    options = AsyncClientOptions(
+        headers=headers,
+        auto_refresh_token=False,
+        persist_session=False,
+    )
+    
+    print("[AUTH] Connecting to Supabase Auth to fetch active profile...", flush=True)
+    try:
+        client = await acreate_client(
+            settings.supabase_url,
+            settings.supabase_anon_key,
+            options=options,
+        )
+        response = await client.auth.get_user(access_token)
+        print("[AUTH] User response successfully retrieved from Supabase Auth!", flush=True)
+    except Exception as exc:
+        print(f"[AUTH] Error during get_user auth request: {exc}", flush=True)
+        raise _unauthorized("Invalid or expired token")
+
+    if response is None or response.user is None or not response.user.email:
+        print("[AUTH] User profile is empty or malformed!", flush=True)
+        raise _unauthorized("Invalid or expired token")
+
+    user_id = uuid.UUID(str(response.user.id))
+    print(f"[AUTH] User successfully validated: {response.user.email} (id: {user_id})", flush=True)
+    return CurrentUser(
+        id=user_id,
+        email=response.user.email,
+    )
+</file>
+
+<file path="app/chat/messages.py">
+"""Convert between AI SDK UI messages and chat_messages rows."""
+
+from __future__ import annotations
+
+import uuid
+from typing import Any
+
+from fastapi import HTTPException, status
+
+from app.assistant.deps import TurnRegistry
+from app.assistant.outputs import GroundedAnswer
+from app.schemas.chat import CitationPart, CitationPayload, MessagePart, TextPart, UIMessage
+
+DEFAULT_THREAD_TITLE = "New chat"
+MAX_TITLE_LENGTH = 255
+
+
+def text_from_parts(parts: list[MessagePart]) -> str:
+    return "".join(part.text for part in parts if isinstance(part, TextPart))
+
+
+def extract_last_user_message(messages: list[UIMessage]) -> UIMessage:
+    for message in reversed(messages):
+        if message.role == "user":
+            return message
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        detail="Request must include at least one user message",
+    )
+
+
+def ui_message_to_insert(
+    message: UIMessage,
+    *,
+    thread_id: uuid.UUID,
+    sequence: int,
+    message_id: uuid.UUID | None = None,
+) -> dict[str, Any]:
+    parts = [part.model_dump(by_alias=True, mode="json") for part in message.parts]
+    return {
+        "id": str(message_id or uuid.uuid4()),
+        "thread_id": str(thread_id),
+        "role": message.role,
+        "content": text_from_parts(message.parts) or None,
+        "parts": parts,
+        "sequence": sequence,
+    }
+
+
+def _parse_part(raw: dict[str, Any]) -> MessagePart:
+    part_type = raw.get("type")
+    if part_type == "text":
+        return TextPart.model_validate(raw)
+    if part_type == "data-citation":
+        return CitationPart.model_validate(raw)
+    raise ValueError(f"Unsupported message part type: {part_type!r}")
+
+
+def row_to_ui_message(row: dict[str, Any]) -> UIMessage:
+    raw_parts = row.get("parts") or []
+    parts: list[MessagePart] = []
+    for part in raw_parts:
+        parts.append(_parse_part(part))
+    if not parts and row.get("content"):
+        parts = [TextPart(text=row["content"])]
+
+    return UIMessage(
+        id=str(row["id"]),
+        role=row["role"],
+        parts=parts,
+    )
+
+
+def citation_parts_from_grounded_answer(
+    answer: GroundedAnswer,
+    registry: TurnRegistry,
+) -> list[CitationPart]:
+    parts: list[CitationPart] = []
+    for citation in answer.citations:
+        try:
+            parsed_id = uuid.UUID(str(citation.chunk_id).strip())
+            passage = registry.passages_by_chunk_id[parsed_id]
+        except (ValueError, KeyError):
+            continue
+
+        parts.append(
+            CitationPart(
+                id=str(citation.chunk_id),
+                data=CitationPayload(
+                    citation_index=citation.citation_index,
+                    chunk_id=parsed_id,
+                    excerpt=citation.excerpt,
+                    ticker=passage.ticker,
+                    company_name=passage.company_name,
+                    form=passage.form,
+                    filing_date=passage.filing_date,
+                    page=passage.page,
+                    section=passage.section,
+                ),
+            )
+        )
+    return parts
+
+
+def build_assistant_message(
+    answer: GroundedAnswer,
+    registry: TurnRegistry,
+    *,
+    message_id: uuid.UUID | None = None,
+) -> UIMessage:
+    parts: list[MessagePart] = [TextPart(text=answer.answer)]
+    parts.extend(citation_parts_from_grounded_answer(answer, registry))
+    return UIMessage(
+        id=str(message_id or uuid.uuid4()),
+        role="assistant",
+        parts=parts,
+    )
+
+
+def title_from_user_message(message: UIMessage) -> str:
+    text = text_from_parts(message.parts).strip()
+    if not text:
+        return DEFAULT_THREAD_TITLE
+    if len(text) <= MAX_TITLE_LENGTH:
+        return text
+    return text[: MAX_TITLE_LENGTH - 3] + "..."
+</file>
+
+<file path="app/chat/orchestrator.py">
+"""Coordinates one chat turn: parallel retrieval -> model agent -> validate -> self-correct -> stream & persist."""
+
+from __future__ import annotations
+
+import asyncio
+import uuid
+import structlog
+from collections.abc import AsyncIterator
+from supabase import AsyncClient
+
+from app.assistant.agent import run_document_agent
+from app.assistant.deps import DocumentAgentDeps, TurnRegistry
+from app.assistant.outputs import GroundedAnswer
+from app.auth.dependencies import CurrentUser
+from app.chat.messages import text_from_parts
+from app.chat.streaming import (
+    stream_grounded_turn_and_persist,
+    stream_error,
+    stream_status,
+)
+from app.grounding.validator import GroundingValidator, prune_unreferenced_citations
+from app.retrieval.retriever import DocumentRetriever
+from app.retrieval.types import format_passages_for_agent
+from app.schemas.chat import UIMessage
+
+MAX_VALIDATION_ATTEMPTS = 2
+logger = structlog.get_logger()
+
+
+async def run_turn(
+    *,
+    client: AsyncClient,
+    thread_id: uuid.UUID,
+    user: CurrentUser,
+    user_message: UIMessage,
+    thread_title: str,
+) -> AsyncIterator[str]:
+    query = text_from_parts(user_message.parts).strip()
+    
+    logger.info(
+        "run_turn_initiated",
+        thread_id=str(thread_id),
+        user_id=str(user.id),
+        query_length=len(query),
+    )
+
+    if not query:
+        logger.error("run_turn_empty_query", thread_id=str(thread_id))
+        async for event in stream_error("User message is empty."):
+            yield event
+        return
+
+    # 1. Start parallel database pre-retrieval
+    async for event in stream_status("searching", "Searching SEC filings…"):
+        yield event
+
+    retriever = DocumentRetriever()
+    
+    # Run the high-performance hybrid search inside Python natively
+    logger.info("executing_hybrid_search", thread_id=str(thread_id))
+    try:
+        # Resolve any active filters dynamically (e.g. scoping AAPL or NVDA)
+        ticker_filter = None
+        query_lower = query.lower()
+        if "apple" in query_lower or "aapl" in query_lower:
+            ticker_filter = "AAPL"
+        elif "nvidia" in query_lower or "nvda" in query_lower:
+            ticker_filter = "NVDA"
+        elif "microsoft" in query_lower or "msft" in query_lower:
+            ticker_filter = "MSFT"
+        elif "amazon" in query_lower or "amzn" in query_lower:
+            ticker_filter = "AMZN"
+        elif "google" in query_lower or "alphabet" in query_lower or "googl" in query_lower:
+            ticker_filter = "GOOGL"
+
+        from app.retrieval.types import SearchFilters
+        filters = SearchFilters(ticker=ticker_filter) if ticker_filter else None
+        
+        passages = retriever.search(query, filters=filters, top_k=8)
+        logger.info("hybrid_search_completed", thread_id=str(thread_id), retrieved_chunks=len(passages))
+    except Exception as exc:
+        logger.exception("hybrid_search_failed", thread_id=str(thread_id), error=str(exc))
+        async for event in stream_error(f"Search retrieval failed: {exc}"):
+            yield event
+        return
+
+    async for event in stream_status("reading", "Reading source passages…"):
+        yield event
+
+    grounded: GroundedAnswer | None = None
+    validation = None
+
+    for attempt in range(1, MAX_VALIDATION_ATTEMPTS + 1):
+        logger.info("generation_attempt_started", thread_id=str(thread_id), attempt=attempt)
+        
+        # Hydrate the TurnRegistry allowlist to track the pre-retrieved database passages
+        registry = TurnRegistry()
+        registry.register_many(passages)
+        
+        context_text = format_passages_for_agent(passages)
+        status_queue = asyncio.Queue()
+
+        def on_status(stage: str, message: str) -> None:
+            status_queue.put_nowait((stage, message))
+
+        deps = DocumentAgentDeps(
+            retriever=retriever,
+            registry=registry,
+            thread_id=thread_id,
+            user_id=user.id,
+            on_status=on_status,
+        )
+        
+        # Native async task dispatch on main loop, receiving pre-retrieved context
+        agent_task = asyncio.create_task(
+            run_document_agent(query, context_text, deps)
+        )
+
+        try:
+            logger.info("awaiting_agent_task", thread_id=str(thread_id), attempt=attempt)
+            grounded = await agent_task
+            logger.info("generation_attempt_success", thread_id=str(thread_id), attempt=attempt)
+        except Exception as exc:
+            logger.exception(
+                "generation_attempt_failed",
+                thread_id=str(thread_id),
+                attempt=attempt,
+                error=str(exc),
+            )
+            async for event in stream_error(f"Assistant run failed: {exc}"):
+                yield event
+            return
+
+        async for event in stream_status("verifying", "Verifying citations…"):
+            yield event
+
+        grounded = prune_unreferenced_citations(grounded)
+        validation = await GroundingValidator().validate(grounded, registry)
+        
+        logger.info(
+            "grounding_validation_evaluated",
+            thread_id=str(thread_id),
+            attempt=attempt,
+            ok=validation.ok,
+            error=validation.error,
+        )
+        
+        if validation.ok or attempt == MAX_VALIDATION_ATTEMPTS:
+            break
+
+        logger.warn("grounding_validation_failed_triggering_retry", thread_id=str(thread_id), attempt=attempt)
+        async for event in stream_status(
+            "retrying",
+            "Could not fully verify citations; retrying with stricter grounding…",
+        ):
+            yield event
+
+    if grounded is None or validation is None:
+        async for event in stream_error("Assistant run failed before producing an answer."):
+            yield event
+        return
+
+    if validation.ok:
+        async for event in stream_status("streaming", "Preparing answer…"):
+            yield event
+
+    logger.info("commencing_stream_output_and_save", thread_id=str(thread_id))
+    async for event in stream_grounded_turn_and_persist(
+        client=client,
+        thread_id=thread_id,
+        user_message=user_message,
+        thread_title=thread_title,
+        answer=grounded,
+        registry=registry,
+        validation=validation,
+    ):
+        yield event
+    logger.info("run_turn_completed", thread_id=str(thread_id))
+</file>
+
+<file path="app/chat/streaming.py">
+"""AI SDK-compatible SSE streaming for grounded assistant replies."""
+
+from __future__ import annotations
+
+import json
+import uuid
+from collections.abc import AsyncIterator
+from supabase import AsyncClient
+
+from app.assistant.deps import TurnRegistry
+from app.assistant.outputs import GroundedAnswer
+from app.chat.messages import build_assistant_message
+from app.database.chats import append_grounded_turn
+from app.grounding.validator import ValidationResult
+from app.schemas.chat import CitationPart, StatusPart, StatusPayload, UIMessage
+
+GROUNDING_FAILURE_MESSAGE = (
+    "I found relevant source passages, but I could not fully verify the answer "
+    "against them. Try asking a narrower question or breaking it into smaller parts."
+)
+
+
+def sse_event(payload: dict[str, object]) -> str:
+    return f"data: {json.dumps(payload, separators=(',', ':'), default=str)}\n\n"
+
+
+async def stream_status(stage: str, message: str) -> AsyncIterator[str]:
+    part = StatusPart(data=StatusPayload(stage=stage, message=message))
+    yield sse_event(part.model_dump(by_alias=True, mode="json"))
+
+
+async def _text_events(text: str, *, message_id: str) -> AsyncIterator[str]:
+    yield sse_event({"type": "text-start", "id": message_id})
+    for word in text.split(" "):
+        yield sse_event({"type": "text-delta", "id": message_id, "delta": f"{word} "})
+    yield sse_event({"type": "text-end", "id": message_id})
+
+
+async def _citation_events(citation_parts: list[CitationPart]) -> AsyncIterator[str]:
+    for part in citation_parts:
+        yield sse_event(part.model_dump(by_alias=True, mode="json"))
+
+
+async def stream_grounded_answer(
+    answer: GroundedAnswer,
+    registry: TurnRegistry,
+    *,
+    message_id: str,
+) -> AsyncIterator[str]:
+    yield sse_event({"type": "start", "messageId": message_id})
+
+    async for event in _text_events(answer.answer, message_id=message_id):
+        yield event
+
+    assistant_message = build_assistant_message(answer, registry, message_id=uuid.UUID(message_id))
+    citation_parts = [p for p in assistant_message.parts if isinstance(p, CitationPart)]
+    async for event in _citation_events(citation_parts):
+        yield event
+
+    yield sse_event({"type": "finish"})
+
+
+async def stream_error(error_text: str) -> AsyncIterator[str]:
+    yield sse_event({"type": "error", "errorText": error_text})
+
+
+async def stream_grounded_turn_and_persist(
+    *,
+    client: AsyncClient,
+    thread_id: uuid.UUID,
+    user_message: UIMessage,
+    thread_title: str,
+    answer: GroundedAnswer,
+    registry: TurnRegistry,
+    validation: ValidationResult,
+) -> AsyncIterator[str]:
+    if not validation.ok:
+        async for event in stream_error(GROUNDING_FAILURE_MESSAGE):
+            yield event
+        return
+
+    message_id = str(uuid.uuid4())
+    assistant_message = build_assistant_message(answer, registry, message_id=uuid.UUID(message_id))
+
+    try:
+        async for event in stream_grounded_answer(answer, registry, message_id=message_id):
+            yield event
+    finally:
+        await append_grounded_turn(
+            client,
+            thread_id=thread_id,
+            user_message=user_message,
+            assistant_message=assistant_message,
+            thread_title=thread_title,
+        )
+</file>
+
+<file path="app/database/models/__init__.py">
+"""SQLAlchemy table models — import all models so Alembic autogenerate sees metadata."""
+
+from app.database.base import Base
+from app.database.models.chat_messages import ChatMessage, MessageRole
+from app.database.models.chat_threads import ChatThread
+from app.database.models.document_chunks import DocumentChunk
+from app.database.models.message_citations import MessageCitation
+from app.database.models.source_documents import SourceDocument
+from app.database.models.user import User
+
+__all__ = [
+    "Base",
+    "ChatMessage",
+    "ChatThread",
+    "DocumentChunk",
+    "MessageCitation",
+    "MessageRole",
+    "SourceDocument",
+    "User",
+]
+</file>
+
+<file path="app/database/models/chat_messages.py">
+"""Chat messages within a thread."""
+
+from __future__ import annotations
+
+import enum
+from uuid import UUID
+
+from sqlalchemy import Enum, ForeignKey, Index, Integer, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database.base import Base
+from app.database.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+
+
+class MessageRole(str, enum.Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+
+
+class ChatMessage(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "chat_messages"
+    __table_args__ = (
+        UniqueConstraint("thread_id", "sequence", name="uq_chat_messages_thread_sequence"),
+        Index("ix_chat_messages_thread_id", "thread_id"),
+    )
+
+    thread_id: Mapped[UUID] = mapped_column(
+        ForeignKey("chat_threads.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    role: Mapped[MessageRole] = mapped_column(
+        Enum(MessageRole, name="message_role", native_enum=False, length=16),
+        nullable=False,
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    message_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
+    thread: Mapped["ChatThread"] = relationship(back_populates="messages")
+    citations: Mapped[list["MessageCitation"]] = relationship(
+        back_populates="message",
+        cascade="all, delete-orphan",
+        order_by="MessageCitation.citation_index",
+    )
+</file>
+
+<file path="app/database/models/chat_threads.py">
+"""Chat conversation threads."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from sqlalchemy import ForeignKey, Index, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database.base import Base
+from app.database.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+
+
+class ChatThread(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "chat_threads"
+    __table_args__ = (Index("ix_chat_threads_user_id", "user_id"),)
+
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    user: Mapped["User"] = relationship(back_populates="chat_threads")
+    messages: Mapped[list["ChatMessage"]] = relationship(
+        back_populates="thread",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.sequence",
+    )
+</file>
+
+<file path="app/database/models/document_chunks.py">
+"""Retrieval-ready document chunks with embeddings and full-text search."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.config import settings
+from app.database.base import Base
+from app.database.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+
+
+class DocumentChunk(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "document_chunks"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_document_id",
+            "chunk_index",
+            name="uq_document_chunks_document_chunk_index",
+        ),
+        Index("ix_document_chunks_source_document_id", "source_document_id"),
+        Index("ix_document_chunks_ticker", "ticker"),
+    )
+
+    source_document_id: Mapped[UUID] = mapped_column(
+        ForeignKey("source_documents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    page: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    section: Mapped[str | None] = mapped_column(Text, nullable=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    token_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(settings.openai_embedding_dimensions),
+        nullable=True,
+    )
+    search_vector: Mapped[str | None] = mapped_column(TSVECTOR, nullable=True)
+    ticker: Mapped[str] = mapped_column(String(16), nullable=False)
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    form: Mapped[str] = mapped_column(String(16), nullable=False)
+    filing_date: Mapped[str] = mapped_column(String(32), nullable=False)
+    filing_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    accession_number: Mapped[str] = mapped_column(String(64), nullable=False)
+    metadata_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
+    source_document: Mapped["SourceDocument"] = relationship(back_populates="chunks")
+    citations: Mapped[list["MessageCitation"]] = relationship(back_populates="chunk")
+</file>
+
+<file path="app/database/models/message_citations.py">
+"""Citations linking assistant messages to source document chunks."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from sqlalchemy import ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database.base import Base
+from app.database.models.mixins import UUIDPrimaryKeyMixin
+
+
+class MessageCitation(Base, UUIDPrimaryKeyMixin):
+    __tablename__ = "message_citations"
+    __table_args__ = (
+        UniqueConstraint(
+            "message_id",
+            "citation_index",
+            name="uq_message_citations_message_citation_index",
+        ),
+        Index("ix_message_citations_message_id", "message_id"),
+        Index("ix_message_citations_chunk_id", "chunk_id"),
+    )
+
+    message_id: Mapped[UUID] = mapped_column(
+        ForeignKey("chat_messages.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    chunk_id: Mapped[UUID] = mapped_column(
+        ForeignKey("document_chunks.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    citation_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    ticker: Mapped[str] = mapped_column(String(16), nullable=False)
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    form: Mapped[str] = mapped_column(String(16), nullable=False)
+    filing_date: Mapped[str] = mapped_column(String(32), nullable=False)
+    page: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    section: Mapped[str | None] = mapped_column(Text, nullable=True)
+    excerpt: Mapped[str] = mapped_column(Text, nullable=False)
+
+    message: Mapped["ChatMessage"] = relationship(back_populates="citations")
+    chunk: Mapped["DocumentChunk"] = relationship(back_populates="citations")
+</file>
+
+<file path="app/database/models/mixins.py">
+"""Shared SQLAlchemy model mixins."""
+
+from datetime import datetime
+from uuid import UUID
+
+from sqlalchemy import DateTime, func, text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+
+class UUIDPrimaryKeyMixin:
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+
+
+class TimestampMixin:
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+</file>
+
+<file path="app/database/models/source_documents.py">
+"""SEC filing source documents."""
+
+from __future__ import annotations
+
+from datetime import date
+
+from sqlalchemy import Date, Index, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database.base import Base
+from app.database.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+
+
+class SourceDocument(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "source_documents"
+    __table_args__ = (
+        UniqueConstraint("accession_number", name="uq_source_documents_accession_number"),
+        Index("ix_source_documents_ticker_filing_date", "ticker", "filing_date"),
+    )
+
+    ticker: Mapped[str] = mapped_column(String(16), nullable=False)
+    cik: Mapped[str] = mapped_column(String(20), nullable=False)
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    form: Mapped[str] = mapped_column(String(16), nullable=False)
+    filing_date: Mapped[date] = mapped_column(Date, nullable=False)
+    report_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    accession_number: Mapped[str] = mapped_column(String(64), nullable=False)
+    primary_document: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    source_url: Mapped[str] = mapped_column(Text, nullable=False)
+    markdown_content: Mapped[str] = mapped_column(Text, nullable=False)
+
+    chunks: Mapped[list["DocumentChunk"]] = relationship(
+        back_populates="source_document",
+        cascade="all, delete-orphan",
+    )
+</file>
+
+<file path="app/database/models/user.py">
+"""App user profile — keyed by Supabase auth.users.id."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database.base import Base
+from app.database.models.mixins import TimestampMixin
+
+
+class User(Base, TimestampMixin):
+    __tablename__ = "users"
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
+
+    chat_threads: Mapped[list["ChatThread"]] = relationship(back_populates="user")
+</file>
+
+<file path="app/database/__init__.py">
+"""SQLAlchemy table models — import all models so Alembic autogenerate sees metadata."""
+
+from app.database.base import Base
+from app.database.models.chat_messages import ChatMessage, MessageRole
+from app.database.models.chat_threads import ChatThread
+from app.database.models.document_chunks import DocumentChunk
+from app.database.models.message_citations import MessageCitation
+from app.database.models.source_documents import SourceDocument
+from app.database.models.user import User
+
+__all__ = [
+    "Base",
+    "ChatMessage",
+    "ChatThread",
+    "DocumentChunk",
+    "MessageCitation",
+    "MessageRole",
+    "SourceDocument",
+    "User",
+]
+</file>
+
+<file path="app/database/base.py">
+"""SQLAlchemy declarative base and metadata."""
+
+from sqlalchemy.orm import DeclarativeBase
+
+
+class Base(DeclarativeBase):
+    pass
+</file>
+
+<file path="app/database/chats.py">
+"""Chat thread and persistence via direct SQL with structured diagnostics."""
+
+from __future__ import annotations
+
+import uuid
+import asyncio
+import structlog
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Any
+
+from fastapi import HTTPException, status
+from sqlalchemy import select, delete
+from supabase import AsyncClient
+
+from app.auth.dependencies import CurrentUser
+from app.chat.messages import (
+    DEFAULT_THREAD_TITLE,
+    title_from_user_message,
+)
+from app.database.session import get_session
+from app.database.models.chat_threads import ChatThread
+from app.database.models.chat_messages import ChatMessage, MessageRole
+from app.database.models.message_citations import MessageCitation
+from app.database.models.user import User
+from app.schemas.chat import CitationPart, CitationPayload, TextPart, ThreadResponse, UIMessage
+
+logger = structlog.get_logger()
+
+
+@dataclass(frozen=True, slots=True)
+class ThreadRow:
+    id: uuid.UUID
+    user_id: uuid.UUID
+    title: str
+
+
+async def require_thread_access(thread_id: uuid.UUID, user: CurrentUser) -> ThreadRow:
+    """Validate that the requesting user owns the targeted chat thread."""
+    def _sync_check() -> ThreadRow:
+        with get_session() as session:
+            thread = session.scalar(
+                select(ChatThread)
+                .where(ChatThread.id == thread_id)
+            )
+            if thread is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Thread not found",
+                )
+            if thread.user_id != user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Forbidden",
+                )
+            return ThreadRow(id=thread.id, user_id=thread.user_id, title=thread.title or "")
+
+    return await asyncio.to_thread(_sync_check)
+
+
+async def list_threads(client: AsyncClient, user: CurrentUser) -> list[ThreadResponse]:
+    """Retrieve all chat threads associated with the authenticated user."""
+    def _sync_list() -> list[ThreadResponse]:
+        with get_session() as session:
+            threads = session.scalars(
+                select(ChatThread)
+                .where(ChatThread.user_id == user.id)
+                .order_by(ChatThread.updated_at.desc())
+            ).all()
+            return [
+                ThreadResponse(
+                    id=t.id,
+                    title=t.title or "New chat",
+                    created_at=t.created_at,
+                    updated_at=t.updated_at,
+                )
+                for t in threads
+            ]
+
+    return await asyncio.to_thread(_sync_list)
+
+
+async def create_thread(
+    client: AsyncClient,
+    user: CurrentUser,
+    *,
+    title: str | None = None,
+) -> ThreadResponse:
+    """Create a new chat thread using secure, direct SQL."""
+    thread_id = uuid.uuid4()
+    logger.info("db_create_thread_initiated", user_id=str(user.id), thread_id=str(thread_id))
+    
+    def _sync_create() -> ThreadResponse:
+        with get_session() as session:
+            new_thread = ChatThread(
+                id=thread_id,
+                user_id=user.id,
+                title=title or DEFAULT_THREAD_TITLE,
+            )
+            session.add(new_thread)
+            session.commit()
+            session.refresh(new_thread)
+            
+            return ThreadResponse(
+                id=new_thread.id,
+                title=new_thread.title or "New chat",
+                created_at=new_thread.created_at,
+                updated_at=new_thread.updated_at,
+            )
+
+    try:
+        res = await asyncio.to_thread(_sync_create)
+        logger.info("db_create_thread_success", user_id=str(user.id), thread_id=str(thread_id))
+        return res
+    except Exception as exc:
+        logger.exception("db_create_thread_failed", user_id=str(user.id), error=str(exc))
+        raise exc
+
+
+async def delete_thread(client: AsyncClient, thread_id: uuid.UUID) -> None:
+    """Permanently delete a thread and all dependent cascade records."""
+    def _sync_delete() -> None:
+        with get_session() as session:
+            session.execute(
+                delete(ChatThread).where(ChatThread.id == thread_id)
+            )
+            session.commit()
+
+    await asyncio.to_thread(_sync_delete)
+
+
+def _citation_rows_from_message(
+    assistant_message: UIMessage,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    message_id = assistant_message.id
+    if message_id is None:
+        return rows
+
+    for part in assistant_message.parts:
+        if not isinstance(part, CitationPart):
+            continue
+        data: CitationPayload = part.data
+        rows.append(
+            {
+                "id": uuid.uuid4(),
+                "message_id": uuid.UUID(message_id),
+                "chunk_id": data.chunk_id,
+                "citation_index": data.citation_index,
+                "excerpt": data.excerpt,
+                "ticker": data.ticker,
+                "company_name": data.company_name,
+                "form": data.form,
+                "filing_date": data.filing_date.isoformat(),
+                "page": data.page,
+                "section": data.section,
+            }
+        )
+    return rows
+
+
+def _row_to_ui_message(message: ChatMessage, citations: list[MessageCitation]) -> UIMessage:
+    raw_parts = message.message_json.get("parts") if message.message_json else []
+    parts: list[Any] = []
+    if raw_parts:
+        for part in raw_parts:
+            part_type = part.get("type")
+            if part_type == "text":
+                parts.append(TextPart.model_validate(part))
+    else:
+        parts.append(TextPart(text=message.content))
+
+    for citation in citations:
+        parts.append(
+            CitationPart(
+                id=str(citation.chunk_id),
+                data=CitationPayload(
+                    citation_index=citation.citation_index,
+                    chunk_id=citation.chunk_id,
+                    excerpt=citation.excerpt,
+                    ticker=citation.ticker,
+                    company_name=citation.company_name,
+                    form=citation.form,
+                    filing_date=citation.filing_date,
+                    page=citation.page,
+                    section=citation.section,
+                ),
+            )
+        )
+
+    return UIMessage(
+        id=str(message.id),
+        role=message.role.value,
+        parts=parts,
+    )
+
+
+async def load_messages(client: AsyncClient, thread_id: uuid.UUID) -> list[UIMessage]:
+    """Load and hydrate message histories with integrated citations."""
+    def _sync_load() -> list[UIMessage]:
+        with get_session() as session:
+            messages = session.scalars(
+                select(ChatMessage)
+                .where(ChatMessage.thread_id == thread_id)
+                .order_by(ChatMessage.sequence)
+            ).all()
+
+            hydrated: list[UIMessage] = []
+            for msg in messages:
+                citations = []
+                if msg.role == MessageRole.ASSISTANT:
+                    citations = list(session.scalars(
+                        select(MessageCitation)
+                        .where(MessageCitation.message_id == msg.id)
+                        .order_by(MessageCitation.citation_index)
+                    ).all())
+                hydrated.append(_row_to_ui_message(msg, citations))
+            return hydrated
+
+    return await asyncio.to_thread(_sync_load)
+
+
+async def get_next_sequence(session: Any, thread_id: uuid.UUID) -> int:
+    row = session.execute(
+        select(ChatMessage.sequence)
+        .where(ChatMessage.thread_id == thread_id)
+        .order_by(ChatMessage.sequence.desc())
+        .limit(1)
+    ).first()
+    if not row:
+        return 0
+    return int(row[0]) + 1
+
+
+async def append_grounded_turn(
+    client: AsyncClient,
+    *,
+    thread_id: uuid.UUID,
+    user_message: UIMessage,
+    assistant_message: UIMessage,
+    thread_title: str,
+) -> None:
+    """Save user and assistant messages with integrated citations using direct SQL."""
+    logger.info("db_append_turn_initiated", thread_id=str(thread_id))
+    
+    def _sync_append() -> None:
+        with get_session() as session:
+            next_sequence = session.execute(
+                select(ChatMessage.sequence)
+                .where(ChatMessage.thread_id == thread_id)
+                .order_by(ChatMessage.sequence.desc())
+                .limit(1)
+            ).first()
+            seq = int(next_sequence[0]) + 1 if next_sequence else 0
+
+            # 1. Insert user message
+            user_text = "".join(p.text for p in user_message.parts if isinstance(p, TextPart))
+            user_row = ChatMessage(
+                id=uuid.uuid4(),
+                thread_id=thread_id,
+                role=MessageRole.USER,
+                sequence=seq,
+                content=user_text,
+                message_json={
+                    "parts": [p.model_dump(by_alias=True, mode="json") for p in user_message.parts]
+                }
+            )
+            session.add(user_row)
+
+            # 2. Insert assistant message
+            assistant_text = "".join(p.text for p in assistant_message.parts if isinstance(p, TextPart))
+            assistant_row = ChatMessage(
+                id=uuid.UUID(assistant_message.id) if assistant_message.id else uuid.uuid4(),
+                thread_id=thread_id,
+                role=MessageRole.ASSISTANT,
+                sequence=seq + 1,
+                content=assistant_text,
+                message_json={
+                    "parts": [p.model_dump(by_alias=True, mode="json") for p in assistant_message.parts if isinstance(p, TextPart)]
+                }
+            )
+            session.add(assistant_row)
+
+            # 3. Insert citations
+            citation_rows = _citation_rows_from_message(assistant_message)
+            for row in citation_rows:
+                session.add(
+                    MessageCitation(
+                        id=row["id"],
+                        message_id=assistant_row.id,
+                        chunk_id=row["chunk_id"],
+                        citation_index=row["citation_index"],
+                        excerpt=row["excerpt"],
+                        ticker=row["ticker"],
+                        company_name=row["company_name"],
+                        form=row["form"],
+                        filing_date=datetime.strptime(row["filing_date"], "%Y-%m-%d").date(),
+                        page=row["page"],
+                        section=row["section"],
+                    )
+                )
+
+            # 4. Update thread title if needed
+            thread = session.scalar(select(ChatThread).where(ChatThread.id == thread_id))
+            if thread:
+                thread.updated_at = datetime.now(UTC)
+                if thread.title == DEFAULT_THREAD_TITLE:
+                    thread.title = title_from_user_message(user_message)
+
+            session.commit()
+
+    try:
+        await asyncio.to_thread(_sync_append)
+        logger.info("db_append_turn_success", thread_id=str(thread_id))
+    except Exception as exc:
+        logger.exception("db_append_turn_failed", thread_id=str(thread_id), error=str(exc))
+        raise exc
+</file>
+
+<file path="app/database/documents.py">
+"""Chunk and source-document lookups for retrieval and agent tools."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session, joinedload
+
+from app.database.models import DocumentChunk, SourceDocument
+
+
+def get_chunks_by_ids(
+    session: Session,
+    chunk_ids: list[UUID],
+) -> dict[UUID, DocumentChunk]:
+    if not chunk_ids:
+        return {}
+
+    rows = session.scalars(
+        select(DocumentChunk)
+        .options(joinedload(DocumentChunk.source_document))
+        .where(DocumentChunk.id.in_(chunk_ids))
+    ).all()
+    return {row.id: row for row in rows}
+
+
+def get_chunk_with_document(
+    session: Session,
+    chunk_id: UUID,
+) -> tuple[DocumentChunk, SourceDocument] | None:
+    chunk = session.scalar(
+        select(DocumentChunk)
+        .options(joinedload(DocumentChunk.source_document))
+        .where(DocumentChunk.id == chunk_id)
+    )
+    if chunk is None or chunk.source_document is None:
+        return None
+    return chunk, chunk.source_document
+
+
+def get_surrounding_chunks(
+    session: Session,
+    chunk_id: UUID,
+    radius: int,
+) -> list[DocumentChunk]:
+    if radius < 1:
+        return []
+
+    anchor = session.scalar(
+        select(DocumentChunk).where(DocumentChunk.id == chunk_id)
+    )
+    if anchor is None:
+        return []
+
+    min_index = anchor.chunk_index - radius
+    max_index = anchor.chunk_index + radius
+    return list(
+        session.scalars(
+            select(DocumentChunk)
+            .options(joinedload(DocumentChunk.source_document))
+            .where(
+                DocumentChunk.source_document_id == anchor.source_document_id,
+                DocumentChunk.chunk_index >= min_index,
+                DocumentChunk.chunk_index <= max_index,
+                DocumentChunk.id != chunk_id,
+            )
+            .order_by(DocumentChunk.chunk_index)
+        ).all()
+    )
+
+
+def get_chunk_context(
+    session: Session,
+    chunk_id: UUID,
+    radius: int,
+) -> list[DocumentChunk] | None:
+    anchor = session.scalar(
+        select(DocumentChunk)
+        .options(joinedload(DocumentChunk.source_document))
+        .where(DocumentChunk.id == chunk_id)
+    )
+    if anchor is None:
+        return None
+
+    min_index = anchor.chunk_index - radius
+    max_index = anchor.chunk_index + radius
+    return list(
+        session.scalars(
+            select(DocumentChunk)
+            .options(joinedload(DocumentChunk.source_document))
+            .where(
+                DocumentChunk.source_document_id == anchor.source_document_id,
+                DocumentChunk.chunk_index >= min_index,
+                DocumentChunk.chunk_index <= max_index,
+            )
+            .order_by(DocumentChunk.chunk_index)
+        ).all()
+    )
+</file>
+
+<file path="app/database/session.py">
+"""SQLAlchemy engine and session factory for direct Postgres access."""
+
+from __future__ import annotations
+
+from collections.abc import Iterator
+from contextlib import contextmanager
+
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.config import settings
+
+_engine: Engine | None = None
+_session_factory: sessionmaker[Session] | None = None
+
+
+def get_engine() -> Engine:
+    global _engine, _session_factory
+    if _engine is None:
+        _engine = create_engine(settings.database_url)
+        _session_factory = sessionmaker(bind=_engine, expire_on_commit=False)
+    return _engine
+
+
+@contextmanager
+def get_session() -> Iterator[Session]:
+    if _session_factory is None:
+        get_engine()
+    assert _session_factory is not None
+    session = _session_factory()
+    try:
+        yield session
+    finally:
+        session.close()
+</file>
+
+<file path="app/database/supabase.py">
+"""Supabase client construction for server-side database and auth access."""
+
+from supabase import AsyncClient, acreate_client
+from supabase.lib.client_options import AsyncClientOptions
+
+from app.config import settings
+
+_service_role_client: AsyncClient | None = None
+
+
+def _server_client_options(
+    *,
+    access_token: str | None = None,
+) -> AsyncClientOptions:
+    headers: dict[str, str] = {}
+    if access_token is not None:
+        headers["Authorization"] = f"Bearer {access_token}"
+
+    return AsyncClientOptions(
+        headers=headers,
+        auto_refresh_token=False,
+        persist_session=False,
+    )
+
+
+def _normalize_access_token(access_token: str) -> str:
+    prefix = "Bearer "
+    if access_token.startswith(prefix):
+        return access_token.removeprefix(prefix)
+    return access_token
+
+
+async def get_service_role_client() -> AsyncClient:
+    """Return a shared client that bypasses RLS — backend-only privileged access."""
+    global _service_role_client
+
+    if _service_role_client is None:
+        _service_role_client = await acreate_client(
+            settings.supabase_url,
+            settings.supabase_service_role_key,
+            options=_server_client_options(),
+        )
+
+    return _service_role_client
+
+
+async def create_user_client(access_token: str) -> AsyncClient:
+    """Return a request-scoped client that enforces RLS for the authenticated user."""
+    return await acreate_client(
+        settings.supabase_url,
+        settings.supabase_anon_key,
+        options=_server_client_options(
+            access_token=_normalize_access_token(access_token),
+        ),
+    )
+</file>
+
+<file path="app/database/users.py">
+"""User record provisioning for Supabase Auth users using direct SQL."""
+
+from __future__ import annotations
+
+import asyncio
+from sqlalchemy.dialects.postgresql import insert
+
+from app.auth.dependencies import CurrentUser
+from app.database.session import get_session
+from app.database.models.user import User
+
+
+async def ensure_user(user: CurrentUser) -> None:
+    """Upsert the authenticated user into the users table via direct, high-performance SQL."""
+    def _sync_upsert() -> None:
+        with get_session() as session:
+            # Build a direct upsert statement (INSERT ON CONFLICT DO UPDATE)
+            stmt = insert(User).values(id=user.id, email=user.email)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["id"],
+                set_={"email": user.email}
+            )
+            session.execute(stmt)
+            session.commit()
+
+    # Safely dispatch the synchronous DB transaction to a background worker thread
+    await asyncio.to_thread(_sync_upsert)
+</file>
+
+<file path="app/grounding/validator.py">
+"""Fail-closed citation validation against the turn registry with autonomous auto-healing."""
+
+from __future__ import annotations
+
+import re
+import uuid
+from dataclasses import dataclass
+
+from app.assistant.deps import TurnRegistry
+from app.assistant.outputs import GroundedAnswer
+
+_CITATION_MARKER_RE = re.compile(r"\[(\d+)\]")
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationResult:
+    ok: bool
+    error: str | None = None
+
+
+class GroundingValidator:
+    async def validate(
+        self,
+        answer: GroundedAnswer,
+        registry: TurnRegistry,
+    ) -> ValidationResult:
+        """Programmatically verify citations against the turn's retrieval registry with resilient table normalizations."""
+        if not answer.answer.strip():
+            return ValidationResult(ok=False, error="Answer text is empty.")
+
+        if answer.insufficient_evidence:
+            if answer.citations:
+                return ValidationResult(
+                    ok=False,
+                    error="insufficient_evidence answers must not include citations.",
+                )
+            return ValidationResult(ok=True)
+
+        if not answer.citations:
+            return ValidationResult(
+                ok=False,
+                error="Grounded answers must include at least one citation.",
+            )
+
+        if not registry.passages_by_chunk_id:
+            return ValidationResult(
+                ok=False,
+                error="Citations present but no passages were retrieved this turn.",
+            )
+
+        indices = [citation.citation_index for citation in answer.citations]
+        if len(indices) != len(set(indices)):
+            return ValidationResult(ok=False, error="Duplicate citation_index values.")
+
+        expected_indices = list(range(1, len(indices) + 1))
+        if sorted(indices) != expected_indices:
+            return ValidationResult(
+                ok=False,
+                error="citation_index values must be unique, 1-based, and contiguous.",
+            )
+
+        marker_indices = {int(m.group(1)) for m in _CITATION_MARKER_RE.finditer(answer.answer)}
+        if marker_indices != set(indices):
+            return ValidationResult(
+                ok=False,
+                error="Answer [n] markers must match citation_index values exactly.",
+            )
+
+        for citation in answer.citations:
+            # 1. Verify UUID format
+            try:
+                parsed_id = uuid.UUID(citation.chunk_id.strip())
+            except ValueError:
+                return ValidationResult(
+                    ok=False,
+                    error=f"Citation [{citation.citation_index}] contains an invalid UUID structure: '{citation.chunk_id}'."
+                )
+
+            # 2. Check if verbatim excerpt is in the cited chunk
+            passage = registry.passages_by_chunk_id.get(parsed_id)
+            
+            excerpt_alphanumeric = re.sub(r"[^a-zA-Z0-9]", "", citation.excerpt.lower())
+            
+            is_grounded_in_cited = False
+            if passage:
+                source_alphanumeric = re.sub(r"[^a-zA-Z0-9]", "", passage.text.lower())
+                if excerpt_alphanumeric in source_alphanumeric:
+                    is_grounded_in_cited = True
+
+            # 3. AUTO-HEALING: If not in the cited chunk, scan other retrieved passages for a verbatim match
+            if not is_grounded_in_cited:
+                healed = False
+                for candidate_id, candidate_passage in registry.passages_by_chunk_id.items():
+                    cand_alphanumeric = re.sub(r"[^a-zA-Z0-9]", "", candidate_passage.text.lower())
+                    if excerpt_alphanumeric in cand_alphanumeric:
+                        # Re-bind the cited ID to the actual chunk that contains this excerpt verbatim
+                        citation.chunk_id = str(candidate_id)
+                        healed = True
+                        break
+                
+                if not healed:
+                    return ValidationResult(
+                        ok=False,
+                        error=f"Citation [{citation.citation_index}] excerpt cannot be verified against any retrieved source chunks."
+                    )
+
+        # Programmatic checks and auto-healing successful!
+        return ValidationResult(ok=True)
+
+
+def prune_unreferenced_citations(answer: GroundedAnswer) -> GroundedAnswer:
+    marker_indices = {int(m.group(1)) for m in _CITATION_MARKER_RE.finditer(answer.answer)}
+    if not marker_indices:
+        return answer
+    citations = [c for c in answer.citations if c.citation_index in marker_indices]
+    if len(citations) == len(answer.citations):
+        return answer
+    return answer.model_copy(update={"citations": citations})
+</file>
+
+<file path="app/retrieval/__init__.py">
+from app.retrieval.retriever import DocumentRetriever
+from app.retrieval.types import RetrievedPassage, SearchFilters
+
+__all__ = ["DocumentRetriever", "RetrievedPassage", "SearchFilters"]
+</file>
+
+<file path="app/retrieval/embeddings.py">
+"""Local query embedding generation using SentenceTransformer."""
+
+from __future__ import annotations
+
+from sentence_transformers import SentenceTransformer
+from app.config import settings
+
+_model: SentenceTransformer | None = None
+
+
+def _get_model() -> SentenceTransformer:
+    global _model
+    if _model is None:
+        _model = SentenceTransformer(settings.openai_embedding_model)
+    return _model
+
+
+def embed_query(text: str) -> list[float]:
+    model = _get_model()
+    emb = model.encode(text, show_progress_bar=False)
+    embedding = [float(x) for x in emb]
+    expected_dims = settings.openai_embedding_dimensions
+    if len(embedding) != expected_dims:
+        raise ValueError(
+            f"Expected embedding dimension {expected_dims}, got {len(embedding)}"
+        )
+    return embedding
+</file>
+
+<file path="app/retrieval/fusion.py">
+"""Reciprocal Rank Fusion for hybrid retrieval."""
+
+from __future__ import annotations
+
+from collections import defaultdict
+from uuid import UUID
+
+
+def reciprocal_rank_fusion(
+    rankings: list[list[UUID]],
+    *,
+    k: int = 60,
+) -> list[tuple[UUID, float]]:
+    scores: dict[UUID, float] = defaultdict(float)
+    for ranking in rankings:
+        for rank, chunk_id in enumerate(ranking, start=1):
+            scores[chunk_id] += 1.0 / (k + rank)
+    return sorted(scores.items(), key=lambda item: -item[1])
+</file>
+
+<file path="app/retrieval/keywords.py">
+"""LLM keyword extraction for Postgres full-text search."""
+
+from __future__ import annotations
+
+import json
+import re
+from openai import OpenAI
+
+from app.config import settings
+from app.retrieval.types import SearchFilters
+
+_FILLER_WORDS = frozenset(
+    {
+        "a", "an", "and", "across", "are", "as", "at", "be", "between", "by", "change",
+        "changed", "describe", "describes", "described", "did", "do", "for", "from",
+        "how", "in", "into", "is", "its", "of", "on", "or", "the", "their", "they",
+        "this", "to", "was", "way", "what", "when", "where", "which", "who", "with",
+    }
+)
+
+_SYSTEM_PROMPT = """\
+You are an expert keyword extraction assistant. 
+Your task is to extract search keywords for a PostgreSQL full-text search over SEC filing database chunks.
+
+Given a user's natural language question, return a JSON object with a "terms" array containing 3 to 5 highly relevant search terms.
+- Focus on domain nouns and standard two-word financial/SEC phrases (e.g. "data center", "revenue mix").
+- Omit conversational filler, generic verbs, and punctuation.
+- Preserve uppercase casing for product/brand names (e.g., "Azure", "iPhone").
+- Return strictly valid JSON matching this schema:
+{
+  "terms": ["term1", "term2", "term3"]
+}
+"""
+
+
+def _get_base_url() -> str | None:
+    if settings.openai_api_key.startswith("gsk_"):
+        return "https://api.groq.com/openai/v1"
+    return None
+
+
+def _client() -> OpenAI:
+    return OpenAI(
+        api_key=settings.openai_api_key,
+        base_url=_get_base_url(),
+    )
+
+
+def _token_count(query: str) -> int:
+    return len(query.split())
+
+
+def _build_user_message(query: str, filters: SearchFilters | None) -> str:
+    parts = [f"Query: {query}"]
+    if filters is not None and filters.ticker is not None:
+        parts.append(f"Ticker filter: {filters.ticker} (omit company name from terms)")
+    return "\n".join(parts)
+
+
+def _deterministic_fallback(query: str) -> str:
+    tokens = re.findall(r"[A-Za-z0-9][A-Za-z0-9\-/]*", query)
+    kept = [t for t in tokens if t.casefold() not in _FILLER_WORDS]
+    if not kept:
+        return query.strip()
+    return " ".join(kept[:5])
+
+
+def extract_fts_keywords(
+    query: str,
+    *,
+    filters: SearchFilters | None = None,
+) -> str:
+    """Return a space-joined keyword string for plainto_tsquery."""
+    stripped = query.strip()
+    if not stripped:
+        return stripped
+
+    # Fast path for short keyword-like queries
+    if _token_count(stripped) <= 5:
+        return stripped
+
+    try:
+        response = _client().chat.completions.create(
+            model=settings.openai_model_name,
+            temperature=0,
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": _build_user_message(stripped, filters)},
+            ],
+        )
+        payload = json.loads(response.choices[0].message.content or "{}")
+        terms = payload.get("terms", [])
+        if not terms or not isinstance(terms, list):
+            return _deterministic_fallback(stripped)
+
+        # Sanitize and limit
+        sanitized = [t.strip() for t in terms if t.strip()]
+        if not sanitized:
+            return _deterministic_fallback(stripped)
+        return " ".join(sanitized[:5])
+    except Exception:
+        return _deterministic_fallback(stripped)
+</file>
+
+<file path="app/retrieval/queries.py">
+"""pgvector semantic search and Postgres full-text search over document_chunks."""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Any
+from dataclasses import dataclass
+from uuid import UUID
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.retrieval.types import RankedChunkHit, SearchFilters
+
+
+@dataclass(frozen=True, slots=True)
+class _FilterClause:
+    sql: str
+    params: dict[str, object]
+
+
+def _vector_literal(values: list[float]) -> str:
+    return "[" + ",".join(str(v) for v in values) + "]"
+
+
+def _build_filters(filters: SearchFilters | None) -> _FilterClause:
+    if filters is None:
+        return _FilterClause("", {})
+
+    clauses: list[str] = []
+    params: dict[str, object] = {}
+
+    if filters.ticker is not None:
+        clauses.append("sd.ticker = :ticker")
+        params["ticker"] = filters.ticker
+    if filters.fiscal_years:
+        clauses.append("sd.filing_date >= :start_date AND sd.filing_date <= :end_date")
+        params["start_date"] = f"{min(filters.fiscal_years)}-01-01"
+        params["end_date"] = f"{max(filters.fiscal_years)}-12-31"
+    if filters.form is not None:
+        clauses.append("sd.form = :form")
+        params["form"] = filters.form
+
+    if not clauses:
+        return _FilterClause("", {})
+
+    return _FilterClause(" AND " + " AND ".join(clauses), params)
+
+
+def _rows_to_hits(rows: Sequence[Any]) -> list[RankedChunkHit]:
+    return [
+        RankedChunkHit(
+            chunk_id=UUID(str(row.id)),
+            rank=index,
+            score=float(row.score) if row.score is not None else None,
+        )
+        for index, row in enumerate(rows, start=1)
+    ]
+
+
+def semantic_search(
+    session: Session,
+    query_vec: list[float],
+    *,
+    limit: int,
+    filters: SearchFilters | None = None,
+) -> list[RankedChunkHit]:
+    filter_clause = _build_filters(filters)
+    sql = f"""
+        SELECT dc.id,
+               1 - (dc.embedding <=> CAST(:query_vec AS vector)) AS score
+        FROM document_chunks dc
+        JOIN source_documents sd ON sd.id = dc.source_document_id
+        WHERE dc.embedding IS NOT NULL
+        {filter_clause.sql}
+        ORDER BY dc.embedding <=> CAST(:query_vec AS vector)
+        LIMIT :limit
+    """
+    params: dict[str, object] = {
+        "query_vec": _vector_literal(query_vec),
+        "limit": limit,
+        **filter_clause.params,
+    }
+    rows = session.execute(text(sql), params).all()
+    return _rows_to_hits(rows)
+
+
+def full_text_search(
+    session: Session,
+    query_text: str,
+    *,
+    limit: int,
+    filters: SearchFilters | None = None,
+) -> list[RankedChunkHit]:
+    filter_clause = _build_filters(filters)
+    sql = f"""
+        SELECT dc.id,
+               ts_rank_cd(dc.search_vector, query) AS score
+        FROM document_chunks dc
+        JOIN source_documents sd ON sd.id = dc.source_document_id,
+             plainto_tsquery('english', :query_text) query
+        WHERE dc.search_vector @@ query
+        {filter_clause.sql}
+        ORDER BY score DESC
+        LIMIT :limit
+    """
+    params: dict[str, object] = {
+        "query_text": query_text,
+        "limit": limit,
+        **filter_clause.params,
+    }
+    rows = session.execute(text(sql), params).all()
+    return _rows_to_hits(rows)
+</file>
+
+<file path="app/retrieval/retriever.py">
+"""Hybrid retrieval orchestrator: embed/keywords -> parallel DB search -> fuse -> hydrate."""
+
+from __future__ import annotations
+
+from concurrent.futures import ThreadPoolExecutor
+from uuid import UUID
+
+from sqlalchemy.orm import Session
+
+from app.database.documents import get_chunks_by_ids, get_surrounding_chunks
+from app.database.session import get_session
+from app.retrieval.embeddings import embed_query
+from app.retrieval.fusion import reciprocal_rank_fusion
+from app.retrieval.keywords import extract_fts_keywords
+from app.retrieval.queries import full_text_search, semantic_search
+from app.retrieval.types import RankedChunkHit, RetrievedPassage, SearchFilters
+from app.database.models import DocumentChunk, SourceDocument
+
+
+class DocumentRetriever:
+    def search(
+        self,
+        query: str,
+        *,
+        filters: SearchFilters | None = None,
+        top_k: int = 10,
+        candidate_k: int = 50,
+        include_neighbors: bool = True,
+        session: Session | None = None,
+    ) -> list[RetrievedPassage]:
+        if session is not None:
+            return self._search_with_session(
+                session,
+                query,
+                filters=filters,
+                top_k=top_k,
+                candidate_k=candidate_k,
+                include_neighbors=include_neighbors,
+            )
+
+        with get_session() as owned_session:
+            return self._search_with_session(
+                owned_session,
+                query,
+                filters=filters,
+                top_k=top_k,
+                candidate_k=candidate_k,
+                include_neighbors=include_neighbors,
+            )
+
+    def _search_with_session(
+        self,
+        session: Session,
+        query: str,
+        *,
+        filters: SearchFilters | None,
+        top_k: int,
+        candidate_k: int,
+        include_neighbors: bool,
+    ) -> list[RetrievedPassage]:
+        # 1. Run Query Embedding + Keyword extraction in parallel
+        with ThreadPoolExecutor(max_workers=2) as prep_executor:
+            embed_future = prep_executor.submit(embed_query, query)
+            kw_future = prep_executor.submit(extract_fts_keywords, query, filters=filters)
+            query_vec = embed_future.result()
+            fts_query = kw_future.result()
+
+        # 2. Run dual database queries in parallel
+        semantic_hits, fts_hits = _dual_search(
+            query_vec,
+            fts_query,
+            candidate_k=candidate_k,
+            filters=filters,
+        )
+
+        # 3. Fuse ranked results
+        semantic_ids = [hit.chunk_id for hit in semantic_hits]
+        fts_ids = [hit.chunk_id for hit in fts_hits]
+        fused = reciprocal_rank_fusion(
+            [semantic_ids, fts_ids],
+            k=60,
+        )[:top_k]
+
+        if not fused:
+            return []
+
+        # 4. Hydrate database structures
+        fused_ids = [chunk_id for chunk_id, _ in fused]
+        fusion_scores = {chunk_id: score for chunk_id, score in fused}
+        chunks_by_id = get_chunks_by_ids(session, fused_ids)
+
+        passages: list[RetrievedPassage] = []
+        seen_neighbor_ids: set[UUID] = set(fused_ids)
+
+        for chunk_id in fused_ids:
+            chunk = chunks_by_id.get(chunk_id)
+            if chunk is None or chunk.source_document is None:
+                continue
+
+            neighbors: list[RetrievedPassage] = []
+            if include_neighbors:
+                for neighbor_chunk in get_surrounding_chunks(
+                    session,
+                    chunk_id,
+                    1, # Neighbour radius = 1
+                ):
+                    if neighbor_chunk.id in seen_neighbor_ids:
+                        continue
+                    if neighbor_chunk.source_document is None:
+                        continue
+                    seen_neighbor_ids.add(neighbor_chunk.id)
+                    neighbors.append(
+                        _passage_from_chunk(
+                            neighbor_chunk,
+                            neighbor_chunk.source_document,
+                            fusion_score=0.0,
+                        )
+                    )
+
+            passages.append(
+                _passage_from_chunk(
+                    chunk,
+                    chunk.source_document,
+                    fusion_score=fusion_scores[chunk_id],
+                    neighbors=neighbors,
+                )
+            )
+
+        return passages
+
+
+def _dual_search(
+    query_vec: list[float],
+    fts_query: str,
+    *,
+    candidate_k: int,
+    filters: SearchFilters | None,
+) -> tuple[list[RankedChunkHit], list[RankedChunkHit]]:
+    def semantic() -> list[RankedChunkHit]:
+        with get_session() as search_session:
+            return semantic_search(
+                search_session,
+                query_vec,
+                limit=candidate_k,
+                filters=filters,
+            )
+
+    def fts() -> list[RankedChunkHit]:
+        with get_session() as search_session:
+            return full_text_search(
+                search_session,
+                fts_query,
+                limit=candidate_k,
+                filters=filters,
+            )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        semantic_future = executor.submit(semantic)
+        fts_future = executor.submit(fts)
+        return semantic_future.result(), fts_future.result()
+
+
+def _passage_from_chunk(
+    chunk: DocumentChunk,
+    document: SourceDocument,
+    *,
+    fusion_score: float,
+    neighbors: list[RetrievedPassage] | None = None,
+) -> RetrievedPassage:
+    return RetrievedPassage(
+        chunk_id=chunk.id,
+        document_id=chunk.source_document_id,
+        chunk_index=chunk.chunk_index,
+        text=chunk.content,
+        page=chunk.page,
+        section=chunk.section,
+        fusion_score=fusion_score,
+        ticker=document.ticker,
+        company_name=document.company_name,
+        form=document.form,
+        filing_date=document.filing_date,
+        fiscal_year=document.filing_date.year,
+        accession_number=document.accession_number,
+        neighbors=neighbors or [],
+    )
+</file>
+
+<file path="app/retrieval/types.py">
+"""Pydantic models shared by retrieval and future agent tools."""
+
+from __future__ import annotations
+
+from datetime import date
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+MAX_PASSAGE_EXCERPT_CHARS = 800
+MAX_AGENT_OUTPUT_CHARS = 12_000
+
+
+class SearchFilters(BaseModel):
+    ticker: str | None = None
+    fiscal_years: list[int] | None = None
+    form: str | None = None
+
+
+class RankedChunkHit(BaseModel):
+    chunk_id: UUID
+    rank: int
+    score: float | None = None
+
+
+class RetrievedPassage(BaseModel):
+    chunk_id: UUID
+    document_id: UUID
+    chunk_index: int
+    text: str
+    page: str | None
+    section: str | None
+    fusion_score: float
+    ticker: str
+    company_name: str | None
+    form: str
+    filing_date: date
+    fiscal_year: int | None
+    accession_number: str
+    neighbors: list[RetrievedPassage] = Field(default_factory=list)
+
+
+def _format_one_passage(passage: RetrievedPassage, *, include_neighbors: bool) -> str:
+    year = passage.fiscal_year or passage.filing_date.year
+    page = f" p.{passage.page}" if passage.page else ""
+    section = f" ({passage.section})" if passage.section else ""
+    excerpt = passage.text.strip()
+    if len(excerpt) > MAX_PASSAGE_EXCERPT_CHARS:
+        excerpt = excerpt[:MAX_PASSAGE_EXCERPT_CHARS] + "..."
+    header = (
+        f"{passage.ticker} {passage.form} FY{year}{page}{section} "
+        f"[{passage.chunk_id}]: {excerpt}"
+    )
+    lines = [header]
+    if include_neighbors:
+        for neighbor in passage.neighbors:
+            neighbor_excerpt = neighbor.text.strip()
+            if len(neighbor_excerpt) > MAX_PASSAGE_EXCERPT_CHARS:
+                neighbor_excerpt = neighbor_excerpt[:MAX_PASSAGE_EXCERPT_CHARS] + "..."
+            lines.append(
+                f"  neighbor idx={neighbor.chunk_index} [{neighbor.chunk_id}]: {neighbor_excerpt}"
+            )
+    return "\n".join(lines)
+
+
+def format_passages_for_agent(passages: list[RetrievedPassage]) -> str:
+    """Bounded, grep-style text for agent tool responses."""
+    if not passages:
+        return "No matching passages found in the filing corpus."
+
+    blocks = [_format_one_passage(p, include_neighbors=True) for p in passages]
+    output = "\n\n".join(blocks)
+    if len(output) > MAX_AGENT_OUTPUT_CHARS:
+        output = (
+            output[:MAX_AGENT_OUTPUT_CHARS]
+            + f"\n... truncated to {len(passages)} passages."
+        )
+    return output
+</file>
+
+<file path="app/schemas/chat.py">
+"""Pydantic models for chat API request and response bodies."""
+
+from __future__ import annotations
+
+import uuid
+from datetime import date, datetime
+from typing import Annotated, Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class TextPart(BaseModel):
+    type: Literal["text"] = "text"
+    text: str
+
+
+class CitationPayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    citation_index: int = Field(alias="citationIndex")
+    chunk_id: uuid.UUID = Field(alias="chunkId")
+    excerpt: str
+    ticker: str
+    company_name: str | None = Field(default=None, alias="companyName")
+    form: str
+    filing_date: date = Field(alias="filingDate")
+    page: str | None = None
+    section: str | None = None
+
+
+class CitationPart(BaseModel):
+    type: Literal["data-citation"] = "data-citation"
+    id: str | None = None
+    data: CitationPayload
+
+
+class CitationContextChunk(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    chunk_id: uuid.UUID = Field(alias="chunkId")
+    chunk_index: int = Field(alias="chunkIndex")
+    role: Literal["previous", "anchor", "next"]
+    text: str
+    page: str | None = None
+    section: str | None = None
+
+
+class CitationContextTable(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    table_index: int = Field(alias="tableIndex")
+    title: str | None = None
+    units: str | None = None
+    markdown: str
+    table_data: dict[str, Any] = Field(alias="tableData")
+
+
+class CitationContextResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    anchor_chunk_id: uuid.UUID = Field(alias="anchorChunkId")
+    document_id: uuid.UUID = Field(alias="documentId")
+    ticker: str
+    company_name: str | None = Field(default=None, alias="companyName")
+    form: str
+    filing_date: date = Field(alias="filingDate")
+    source_url: str = Field(alias="sourceUrl")
+    chunks: list[CitationContextChunk]
+    table: CitationContextTable | None = None
+
+
+class StatusPayload(BaseModel):
+    stage: str
+    message: str
+
+
+class StatusPart(BaseModel):
+    type: Literal["data-status"] = "data-status"
+    data: StatusPayload
+
+
+MessagePart = Annotated[TextPart | CitationPart, Field(discriminator="type")]
+
+
+class UIMessage(BaseModel):
+    id: str | None = None
+    role: Literal["user", "assistant", "system"]
+    parts: list[MessagePart]
+
+
+class CreateThreadRequest(BaseModel):
+    title: str | None = None
+
+
+class ThreadResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: uuid.UUID
+    title: str
+    created_at: datetime = Field(serialization_alias="createdAt")
+    updated_at: datetime = Field(serialization_alias="updatedAt")
+
+
+class ThreadListResponse(BaseModel):
+    threads: list[ThreadResponse]
+
+
+class MessageHistoryResponse(BaseModel):
+    messages: list[UIMessage]
+
+
+class StreamRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    thread_id: uuid.UUID = Field(validation_alias="threadId")
+    messages: list[UIMessage]
+
+
+def thread_row_to_response(row: dict[str, Any]) -> ThreadResponse:
+    return ThreadResponse(
+        id=uuid.UUID(str(row["id"])),
+        title=row["title"],
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+    )
+</file>
+
+<file path="app/__init__.py">
+
+</file>
+
+<file path="app/config.py">
+"""Application settings — single source of truth for backend environment with defensive CORS parsing."""
+
+from functools import lru_cache
+from pathlib import Path
+from typing import Annotated
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+_ENV_FILE = _BACKEND_DIR / ".env"
+
+
+def _settings_config() -> SettingsConfigDict:
+    kwargs: dict[str, object] = {
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
+    if _ENV_FILE.is_file():
+        kwargs["env_file"] = _ENV_FILE
+    return SettingsConfigDict(**kwargs)
+
+
+class Settings(BaseSettings):
+    model_config = _settings_config()
+
+    # Supabase (Auth + API)
+    supabase_url: str
+    supabase_anon_key: str
+    supabase_service_role_key: str
+
+    # Postgres
+    database_url: str
+
+    # OpenAI / Groq
+    openai_api_key: str
+    openai_model_name: str = "llama-3.3-70b-versatile"
+    openai_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    openai_embedding_dimensions: int = 384
+
+    # Server CORS
+    allowed_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["http://localhost:5173"]
+    )
+
+    @field_validator("allowed_origins", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, value: str | list[str]) -> list[str]:
+        """Safely parse comma-separated origins and strip any accidental double or single quotes."""
+        if isinstance(value, str):
+            # Clean up commas, and strip any accidental quotes added by env parsers
+            origins = [
+                origin.strip().replace('"', '').replace("'", "")
+                for origin in value.split(",")
+                if origin.strip()
+            ]
+            return origins
+        return value
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()
+</file>
+
+<file path="app/main.py">
+"""FastAPI application entrypoint with structured logging and global error handling."""
+
+from __future__ import annotations
+
+import logging
+import sys
+import structlog
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.api.auth import router as auth_router
+from app.api.chat import router as chat_router
+from app.config import settings
+
+# Initialize standard Python logging to match structlog
+logging.basicConfig(
+    format="%(message)s",
+    stream=sys.stdout,
+    level=logging.INFO,
+)
+
+# Configure structlog to output clean, structured JSON in terminal
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
+    context_class=dict,
+    logger_factory=structlog.PrintLoggerFactory(),
+    cache_logger_on_first_use=True,
+)
+
+logger = structlog.get_logger()
+
+app = FastAPI(title="Document Copilot")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    """Intercept validation anomalies and log metrics inside a structured JSON schema."""
+    raw_body = None
+    try:
+        body_bytes = await request.body()
+        raw_body = body_bytes.decode("utf-8")
+    except Exception:
+        raw_body = "<failed to decode body>"
+
+    logger.error(
+        "request_validation_failed",
+        url=str(request.url),
+        method=request.method,
+        errors=exc.errors(),
+        body=raw_body,
+    )
+    
+    # Sanitize bytes inside error dicts to ensure JSON serializable
+    sanitized_errors = []
+    for error in exc.errors():
+        sanitized_error = dict(error)
+        if "input" in sanitized_error and isinstance(sanitized_error["input"], bytes):
+            try:
+                sanitized_error["input"] = sanitized_error["input"].decode("utf-8")
+            except Exception:
+                sanitized_error["input"] = str(sanitized_error["input"])
+        sanitized_errors.append(sanitized_error)
+    
+    return JSONResponse(
+        status_code=422,
+        content={"detail": sanitized_errors},
+    )
+
+
+app.include_router(auth_router)
+app.include_router(chat_router)
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+</file>
+
+<file path="ingest/chunk_and_embed.py">
+"""Chunk SEC HTML filings, embed chunks locally, and store in document_chunks."""
+
+from __future__ import annotations
+
+import argparse
+from dataclasses import dataclass
+
+from sqlalchemy import create_engine, delete, func, select
+from sqlalchemy.orm import Session
+
+from app.config import settings
+from app.database.models import DocumentChunk, MessageCitation, SourceDocument
+from ingest.chunking import (
+    CHUNK_MAX_TOKENS,
+    ChunkRecord,
+    chunk_document,
+    html_path_for_accession,
+    iter_all_html_paths,
+)
+from ingest.embeddings import EMBED_BATCH_SIZE, embed_texts
+
+
+@dataclass(frozen=True, slots=True)
+class IngestCounts:
+    processed: int = 0
+    skipped: int = 0
+    chunks_written: int = 0
+
+
+def _filing_metadata(document: SourceDocument) -> dict:
+    return {
+        "ticker": document.ticker,
+        "cik": document.cik,
+        "company_name": document.company_name,
+        "form": document.form,
+        "filing_date": document.filing_date.isoformat(),
+        "report_date": document.report_date.isoformat() if document.report_date else None,
+        "accession_number": document.accession_number,
+        "primary_document": document.primary_document,
+        "source_url": document.source_url,
+    }
+
+
+def _document_has_chunks(session: Session, document_id) -> bool:
+    count = session.scalar(
+        select(func.count())
+        .select_from(DocumentChunk)
+        .where(DocumentChunk.source_document_id == document_id)
+    )
+    return bool(count)
+
+
+def _delete_chunks(session: Session, document_id) -> None:
+    chunk_ids = select(DocumentChunk.id).where(DocumentChunk.source_document_id == document_id)
+    session.execute(
+        delete(MessageCitation).where(MessageCitation.chunk_id.in_(chunk_ids))
+    )
+    session.execute(
+        delete(DocumentChunk).where(DocumentChunk.source_document_id == document_id)
+    )
+
+
+def ingest_document(
+    session: Session,
+    document: SourceDocument,
+    *,
+    max_chunks: int | None = None,
+    dry_run: bool = False,
+    skip_existing: bool = True,
+    force: bool = False,
+) -> int:
+    if force and not dry_run:
+        _delete_chunks(session, document.id)
+    elif skip_existing and _document_has_chunks(session, document.id):
+        print(f"Skipping existing chunks for {document.accession_number}")
+        return 0
+
+    html_path = html_path_for_accession(document.accession_number)
+    print(f"Chunking {document.accession_number} from {html_path.name}...")
+    records = chunk_document(
+        html_path,
+        _filing_metadata(document),
+        max_chunks=max_chunks,
+    )
+
+    if not records:
+        print(f"No chunks produced for {document.accession_number}")
+        return 0
+
+    max_tokens = max(record.token_count for record in records)
+    print(
+        f"  {len(records)} chunk(s), max_tokens={max_tokens}, "
+        f"limit={CHUNK_MAX_TOKENS}"
+    )
+
+    if dry_run:
+        sample = records[0]
+        print(f"  sample section={sample.section!r} page={sample.page!r}")
+        print(f"  sample preview={sample.text[:120]!r}")
+        return len(records)
+
+    texts = [record.text for record in records]
+    print(f"  Embedding {len(texts)} chunk(s) (batch_size={EMBED_BATCH_SIZE})...")
+    vectors = embed_texts(texts)
+
+    # Insert and commit in safe, smaller transaction blocks
+    BATCH_WRITE_SIZE = 100
+    for i in range(0, len(records), BATCH_WRITE_SIZE):
+        batch_records = records[i : i + BATCH_WRITE_SIZE]
+        batch_vectors = vectors[i : i + BATCH_WRITE_SIZE]
+
+        for record, embedding in zip(batch_records, batch_vectors, strict=True):
+            metadata = dict(record.chunk_metadata)
+            session.add(
+                DocumentChunk(
+                    source_document_id=document.id,
+                    chunk_index=record.chunk_index,
+                    page=record.page,
+                    section=record.section,
+                    content=record.text,
+                    embedding=embedding,
+                    token_count=record.token_count,
+                    ticker=document.ticker,
+                    company_name=document.company_name,
+                    form=document.form,
+                    filing_date=document.filing_date.isoformat(),
+                    filing_year=document.filing_date.year,
+                    accession_number=document.accession_number,
+                    metadata_json=metadata,
+                )
+            )
+        session.commit()
+        print(f"    Committed batch {i // BATCH_WRITE_SIZE + 1} ({len(batch_records)} chunks)...")
+
+    print(f"  Successfully finished {document.accession_number}")
+    return len(records)
+
+
+def ingest_accessions(
+    accessions: list[str],
+    *,
+    max_chunks: int | None = None,
+    dry_run: bool = False,
+    skip_existing: bool = True,
+    force: bool = False,
+) -> IngestCounts:
+    engine = create_engine(settings.database_url)
+    counts = IngestCounts()
+
+    with Session(engine) as session:
+        for accession in accessions:
+            document = session.scalar(
+                select(SourceDocument).where(
+                    SourceDocument.accession_number == accession
+                )
+            )
+            if document is None:
+                raise ValueError(
+                    f"No source_document for accession {accession}. "
+                    "Run `load_source_documents` first."
+                )
+
+            if (
+                not dry_run
+                and not force
+                and skip_existing
+                and _document_has_chunks(session, document.id)
+            ):
+                print(f"Skipping existing chunks for {accession}")
+                counts = IngestCounts(
+                    processed=counts.processed,
+                    skipped=counts.skipped + 1,
+                    chunks_written=counts.chunks_written,
+                )
+                continue
+
+            written = ingest_document(
+                session,
+                document,
+                max_chunks=max_chunks,
+                dry_run=dry_run,
+                skip_existing=skip_existing,
+                force=force,
+            )
+            counts = IngestCounts(
+                processed=counts.processed + 1,
+                skipped=counts.skipped,
+                chunks_written=counts.chunks_written + written,
+            )
+
+    return counts
+
+
+def ingest_all(
+    *,
+    max_chunks: int | None = None,
+    dry_run: bool = False,
+    skip_existing: bool = True,
+    force: bool = False,
+) -> IngestCounts:
+    accessions = [accession for accession, _ in iter_all_html_paths()]
+    return ingest_accessions(
+        accessions,
+        max_chunks=max_chunks,
+        dry_run=dry_run,
+        skip_existing=skip_existing,
+        force=force,
+    )
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    target = parser.add_mutually_exclusive_group(required=True)
+    target.add_argument("--accession", help="Process one filing by accession number")
+    target.add_argument("--all", action="store_true", help="Process all manifest filings")
+    parser.add_argument(
+        "--max-chunks",
+        type=int,
+        default=None,
+        help="Cap chunks per document",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Chunk only; no embeddings or database writes",
+    )
+    parser.add_argument(
+        "--skip-existing",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Skip documents that already have chunks",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Delete existing chunks before re-ingesting",
+    )
+    return parser
+
+
+def main() -> None:
+    parser = _build_parser()
+    args = parser.parse_args()
+
+    if args.all:
+        result = ingest_all(
+            max_chunks=args.max_chunks,
+            dry_run=args.dry_run,
+            skip_existing=args.skip_existing,
+            force=args.force,
+        )
+    else:
+        result = ingest_accessions(
+            [args.accession],
+            max_chunks=args.max_chunks,
+            dry_run=args.dry_run,
+            skip_existing=args.skip_existing,
+            force=args.force,
+        )
+
+    print(
+        "Done: "
+        f"{result.processed} document(s) processed, "
+        f"{result.skipped} skipped, "
+        f"{result.chunks_written} chunk(s) written"
+    )
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="ingest/chunking.py">
+"""Docling-based chunking for SEC HTML filings."""
+
+from __future__ import annotations
+
+import json
+import re
+from collections.abc import Iterator
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import tiktoken
+from docling.chunking import HybridChunker
+from docling.document_converter import DocumentConverter
+from docling_core.transforms.chunker.hierarchical_chunker import (
+    ChunkingDocSerializer,
+    ChunkingSerializerProvider,
+    HierarchicalChunker,
+)
+from docling_core.transforms.chunker.tokenizer.openai import OpenAITokenizer
+from docling_core.transforms.serializer.markdown import (
+    MarkdownParams,
+    MarkdownTableSerializer,
+)
+from ingest.sec_tables import ExtractedTable, TableRow, extract_sec_tables
+
+CHUNK_MAX_TOKENS = 512
+DOWNLOADS_DIR = Path(__file__).resolve().parents[2] / "data" / "downloads"
+MANIFEST_PATH = Path(__file__).resolve().parents[2] / "data" / "markdown" / "manifest.json"
+
+_ITEM_SECTION_RE = re.compile(r"\bItem\s+[\dA-Z.]+\b", re.IGNORECASE)
+
+
+class PatchedOpenAITokenizer(OpenAITokenizer):
+    """Allow tiktoken special tokens that appear in SEC filing text."""
+
+    def count_tokens(self, text: str) -> int:
+        return len(
+            self.tokenizer.encode(
+                text=text,
+                allowed_special=set(),
+                disallowed_special=(),
+            )
+        )
+
+
+class MarkdownTableSerializerProvider(ChunkingSerializerProvider):
+    """Serialize tables as Markdown for 10-K financial tables."""
+
+    def get_serializer(self, doc: Any) -> ChunkingDocSerializer:
+        return ChunkingDocSerializer(
+            doc=doc,
+            table_serializer=MarkdownTableSerializer(),
+            params=MarkdownParams(compact_tables=True),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ChunkRecord:
+    chunk_index: int
+    text: str
+    page: str | None
+    section: str | None
+    token_count: int
+    chunk_metadata: dict[str, Any]
+
+
+def load_manifest_html_paths() -> dict[str, str]:
+    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    paths: dict[str, str] = {}
+    for filing in manifest.get("filings", []):
+        accession = filing["accession_number"]
+        html_path = filing.get("html_local_path")
+        if not html_path:
+            html_path = str(Path(filing["local_path"]).with_suffix(".htm"))
+        paths[accession] = html_path
+    return paths
+
+
+def html_path_for_accession(accession_number: str) -> Path:
+    paths = load_manifest_html_paths()
+    if accession_number not in paths:
+        raise KeyError(f"Accession {accession_number} not found in {MANIFEST_PATH}")
+    html_path = DOWNLOADS_DIR / paths[accession_number]
+    if not html_path.is_file():
+        raise FileNotFoundError(f"Missing HTML file: {html_path}")
+    return html_path
+
+
+def build_tokenizer(max_tokens: int = CHUNK_MAX_TOKENS) -> PatchedOpenAITokenizer:
+    return PatchedOpenAITokenizer(
+        tokenizer=tiktoken.get_encoding("cl100k_base"),
+        max_tokens=max_tokens,
+    )
+
+
+def build_hybrid_chunker(
+    max_tokens: int = CHUNK_MAX_TOKENS,
+) -> HybridChunker:
+    return HybridChunker(
+        tokenizer=build_tokenizer(max_tokens=max_tokens),
+        merge_peers=True,
+        repeat_table_header=True,
+        serializer_provider=MarkdownTableSerializerProvider(),
+    )
+
+
+def build_hierarchical_chunker() -> HierarchicalChunker:
+    return HierarchicalChunker(
+        serializer_provider=MarkdownTableSerializerProvider(),
+    )
+
+
+def convert_html_to_document(html_path: Path) -> Any:
+    return DocumentConverter().convert(html_path).document
+
+
+def _page_from_chunk_meta(meta: Any) -> str | None:
+    origin = getattr(meta, "origin", None)
+    if origin is not None:
+        page_no = getattr(origin, "page_no", None)
+        if page_no is not None:
+            return str(page_no)
+
+    for item in getattr(meta, "doc_items", []):
+        prov = getattr(item, "prov", None) or []
+        for entry in prov:
+            page_no = getattr(entry, "page_no", None)
+            if page_no is not None:
+                return str(page_no)
+    return None
+
+
+def _section_from_chunk(meta: Any, text: str) -> str | None:
+    headings = getattr(meta, "headings", None) or []
+    if headings:
+        return " > ".join(headings)
+
+    match = _ITEM_SECTION_RE.search(text)
+    if match:
+        return match.group(0)
+    return None
+
+
+def map_chunk_record(
+    *,
+    chunk_index: int,
+    chunk: Any,
+    chunker: HybridChunker,
+    filing_metadata: dict[str, Any],
+) -> ChunkRecord:
+    contextualized = chunker.contextualize(chunk=chunk)
+    meta = chunk.meta
+    tokenizer = chunker.tokenizer
+
+    return ChunkRecord(
+        chunk_index=chunk_index,
+        text=contextualized,
+        page=_page_from_chunk_meta(meta),
+        section=_section_from_chunk(meta, contextualized),
+        token_count=tokenizer.count_tokens(contextualized),
+        chunk_metadata={
+            **_base_chunk_metadata(filing_metadata),
+            "chunk_kind": "narrative",
+            "raw_text": chunk.text,
+            "docling_meta": meta.export_json_dict(),
+        },
+    )
+
+
+def chunk_document(
+    html_path: Path,
+    filing_metadata: dict[str, Any],
+    *,
+    max_chunks: int | None = None,
+) -> list[ChunkRecord]:
+    html = html_path.read_text(encoding="utf-8")
+    doc = convert_html_to_document(html_path)
+    chunker = build_hybrid_chunker()
+    tables = extract_sec_tables(html)
+    used_table_indexes: set[int] = set()
+    records: list[ChunkRecord] = []
+
+    for index, chunk in enumerate(chunker.chunk(dl_doc=doc)):
+        if max_chunks is not None and index >= max_chunks:
+            break
+        if _chunk_contains_table(chunk):
+            table = _matching_table_for_chunk(
+                chunker.contextualize(chunk=chunk),
+                tables,
+                used_table_indexes,
+            )
+            narrative_text = _narrative_text_without_tables(
+                chunker.contextualize(chunk=chunk)
+            )
+            if narrative_text:
+                records.append(
+                    ChunkRecord(
+                        chunk_index=len(records),
+                        text=narrative_text,
+                        page=_page_from_chunk_meta(chunk.meta),
+                        section=_section_from_chunk(chunk.meta, narrative_text),
+                        token_count=chunker.tokenizer.count_tokens(narrative_text),
+                        chunk_metadata={
+                            **_base_chunk_metadata(filing_metadata),
+                            "chunk_kind": "narrative",
+                            "raw_text": narrative_text,
+                            "docling_meta": chunk.meta.export_json_dict(),
+                        },
+                    )
+                )
+            if table is not None:
+                _append_table_row_records(
+                    records=records,
+                    table=table,
+                    chunker=chunker,
+                    filing_metadata=filing_metadata,
+                )
+                used_table_indexes.add(table.table_index)
+                continue
+            records.append(
+                map_chunk_record(
+                    chunk_index=len(records),
+                    chunk=chunk,
+                    chunker=chunker,
+                    filing_metadata=filing_metadata,
+                )
+            )
+            continue
+        records.append(
+            map_chunk_record(
+                chunk_index=len(records),
+                chunk=chunk,
+                chunker=chunker,
+                filing_metadata=filing_metadata,
+            )
+        )
+
+    if max_chunks is None:
+        for table in tables:
+            if table.table_index in used_table_indexes:
+                continue
+            _append_table_row_records(
+                records=records,
+                table=table,
+                chunker=chunker,
+                filing_metadata=filing_metadata,
+            )
+
+    return records
+
+
+def _append_table_row_records(
+    *,
+    records: list[ChunkRecord],
+    table: ExtractedTable,
+    chunker: HybridChunker,
+    filing_metadata: dict[str, Any],
+) -> None:
+    for row in table.rows:
+        text = _table_row_chunk_text(table, row)
+        records.append(
+            ChunkRecord(
+                chunk_index=len(records),
+                text=text,
+                page=None,
+                section=table.title,
+                token_count=chunker.tokenizer.count_tokens(text),
+                chunk_metadata={
+                    **_base_chunk_metadata(filing_metadata),
+                    "chunk_kind": "table_row",
+                    "table_index": table.table_index,
+                    "table_title": table.title,
+                    "row_label": row.label,
+                    "raw_text": text,
+                    "table": table.to_dict(),
+                },
+            )
+        )
+
+
+def _base_chunk_metadata(filing_metadata: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "ticker": filing_metadata.get("ticker"),
+        "cik": filing_metadata.get("cik"),
+        "company_name": filing_metadata.get("company_name"),
+        "form": filing_metadata.get("form"),
+        "filing_date": filing_metadata.get("filing_date"),
+        "report_date": filing_metadata.get("report_date"),
+        "fiscal_year": filing_metadata.get("fiscal_year"),
+        "accession_number": filing_metadata.get("accession_number"),
+        "primary_document": filing_metadata.get("primary_document"),
+        "source_url": filing_metadata.get("source_url"),
+    }
+
+
+def _chunk_contains_table(chunk: Any) -> bool:
+    for item in getattr(chunk.meta, "doc_items", []) or []:
+        label = str(getattr(item, "label", "")).lower()
+        if "table" in label:
+            return True
+    return False
+
+
+def _matching_table_for_chunk(
+    chunk_text: str,
+    tables: list[ExtractedTable],
+    used_table_indexes: set[int],
+) -> ExtractedTable | None:
+    for table in tables:
+        if table.table_index in used_table_indexes:
+            continue
+        if _table_matches_chunk(chunk_text, table):
+            return table
+    return None
+
+
+def _table_matches_chunk(chunk_text: str, table: ExtractedTable) -> bool:
+    if not table.rows:
+        return False
+    first_row = table.rows[0]
+    if first_row.label and first_row.label in chunk_text:
+        return True
+    return any(cell.text.strip("$") in chunk_text for cell in first_row.cells if cell.text)
+
+
+def _narrative_text_without_tables(text: str) -> str:
+    lines = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("|"):
+            continue
+        lines.append(stripped)
+    return "\n".join(lines)
+
+
+def _table_row_chunk_text(table: ExtractedTable, row: TableRow) -> str:
+    title = table.title or f"Table {table.table_index + 1}"
+    lines = [title]
+    if table.units:
+        lines.append(f"Units: {table.units}")
+
+    row_markdown = _markdown_for_row(table, row)
+    lines.append(row_markdown)
+    if table.footnotes:
+        lines.extend(table.footnotes)
+    return "\n".join(lines)
+
+
+def _markdown_for_row(table: ExtractedTable, row: TableRow) -> str:
+    header = "| " + " | ".join(column.label for column in table.columns) + " |"
+    separator = "| " + " | ".join("---" for _ in table.columns) + " |"
+    body = "| " + " | ".join([row.label, *[cell.text for cell in row.cells]]) + " |"
+    return "\n".join([header, separator, body])
+
+
+def chunk_document_hierarchical(html_path: Path) -> list[str]:
+    """Layout-only chunks from HierarchicalChunker."""
+    doc = convert_html_to_document(html_path)
+    chunker = build_hierarchical_chunker()
+    return [chunk.text for chunk in chunker.chunk(dl_doc=doc)]
+
+
+def iter_all_html_paths() -> Iterator[tuple[str, Path]]:
+    for accession, relative_path in load_manifest_html_paths().items():
+        yield accession, DOWNLOADS_DIR / relative_path
+</file>
+
+<file path="ingest/embeddings.py">
+"""SentenceTransformer embedding generation for document chunks."""
+
+from __future__ import annotations
+
+from sentence_transformers import SentenceTransformer
+from app.config import settings
+
+EMBED_BATCH_SIZE = 100
+_model: SentenceTransformer | None = None
+
+
+def _get_model() -> SentenceTransformer:
+    global _model
+    if _model is None:
+        _model = SentenceTransformer(settings.openai_embedding_model)
+    return _model
+
+
+def embed_texts(texts: list[str], *, batch_size: int = EMBED_BATCH_SIZE) -> list[list[float]]:
+    if not texts:
+        return []
+
+    expected_dims = settings.openai_embedding_dimensions
+    model = _get_model()
+
+    embeddings = model.encode(texts, batch_size=batch_size, show_progress_bar=False)
+    vectors: list[list[float]] = []
+    for emb in embeddings:
+        vector = [float(x) for x in emb]
+        if len(vector) != expected_dims:
+            raise ValueError(
+                f"Expected embedding dimension {expected_dims}, got {len(vector)}"
+            )
+        vectors.append(vector)
+
+    return vectors
+</file>
+
+<file path="ingest/load_source_documents.py">
+"""Load normalized Markdown filings from data/markdown into source_documents."""
+
+from __future__ import annotations
+
+import json
+from datetime import date
+from pathlib import Path
+
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
+
+from app.config import settings
+from app.database.models import SourceDocument
+
+MARKDOWN_DIR = Path(__file__).resolve().parents[2] / "data" / "markdown"
+SKIP_EXISTING = True
+
+COMPANY_NAMES = {
+    "AAPL": "Apple Inc.",
+    "MSFT": "Microsoft Corporation",
+    "NVDA": "NVIDIA Corporation",
+    "AMZN": "Amazon.com, Inc.",
+    "GOOGL": "Alphabet Inc.",
+}
+
+
+def parse_date(value: str | None) -> date | None:
+    if not value:
+        return None
+    return date.fromisoformat(value)
+
+
+def load_source_documents() -> dict[str, int]:
+    manifest_path = MARKDOWN_DIR / "manifest.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(
+            f"Missing {manifest_path}. Run `data/convert_to_markdown.py` first."
+        )
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    filings = manifest.get("filings", [])
+    if not filings:
+        raise ValueError(f"No filings listed in {manifest_path}")
+
+    # Use standard settings database connection string
+    engine = create_engine(settings.database_url)
+    counts = {"inserted": 0, "skipped": 0, "updated": 0}
+
+    with Session(engine) as session:
+        for filing in filings:
+            accession_number = filing["accession_number"]
+            existing = session.scalar(
+                select(SourceDocument).where(
+                    SourceDocument.accession_number == accession_number
+                )
+            )
+
+            if existing and SKIP_EXISTING:
+                print(f"Skipping existing {accession_number}")
+                counts["skipped"] += 1
+                continue
+
+            markdown_path = MARKDOWN_DIR / filing["local_path"]
+            if not markdown_path.is_file():
+                raise FileNotFoundError(f"Missing Markdown file: {markdown_path}")
+
+            fields = {
+                "ticker": filing["ticker"],
+                "cik": filing["cik"],
+                "company_name": COMPANY_NAMES.get(filing["ticker"]),
+                "form": filing["form"],
+                "filing_date": parse_date(filing["filing_date"]),
+                "report_date": parse_date(filing.get("report_date")),
+                "accession_number": accession_number,
+                "primary_document": filing["primary_document"],
+                "source_url": filing["source_url"],
+                "markdown_content": markdown_path.read_text(encoding="utf-8"),
+            }
+
+            if existing:
+                print(f"Updating {accession_number}...")
+                for key, value in fields.items():
+                    setattr(existing, key, value)
+                counts["updated"] += 1
+            else:
+                print(f"Inserting {accession_number}...")
+                session.add(SourceDocument(**fields))
+                counts["inserted"] += 1
+
+        session.commit()
+
+    return counts
+
+
+if __name__ == "__main__":
+    result = load_source_documents()
+    print(
+        "Loaded source documents: "
+        f"{result['inserted']} inserted, "
+        f"{result['updated']} updated, "
+        f"{result['skipped']} skipped"
+    )
+</file>
+
+<file path="ingest/sec_tables.py">
+"""SEC HTML table extraction for financial filing tables."""
+
+from __future__ import annotations
+
+import hashlib
+import re
+from dataclasses import dataclass, field
+from html.parser import HTMLParser
+from typing import Any
+
+_AMOUNT_RE = re.compile(r"^\(?\$?[\d,]+(?:\.\d+)?\)?$")
+_FOOTNOTE_RE = re.compile(r"^\(\d+\)")
+_UNIT_RE = re.compile(r"\(([^)]*(?:million|thousand|billion)[^)]*)\)", re.IGNORECASE)
+_VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param"}
+
+
+@dataclass(frozen=True, slots=True)
+class InlineFact:
+    name: str | None
+    context_ref: str | None
+    unit_ref: str | None
+    decimals: str | None
+    scale: str | None
+    fact_id: str | None
+    value: str
+
+    def to_dict(self) -> dict[str, str | None]:
+        return {
+            "name": self.name,
+            "context_ref": self.context_ref,
+            "unit_ref": self.unit_ref,
+            "decimals": self.decimals,
+            "scale": self.scale,
+            "fact_id": self.fact_id,
+            "value": self.value,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class TableColumn:
+    label: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {"label": self.label}
+
+
+@dataclass(frozen=True, slots=True)
+class TableCell:
+    text: str
+    facts: tuple[InlineFact, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "text": self.text,
+            "facts": [fact.to_dict() for fact in self.facts],
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class TableRow:
+    label: str
+    cells: tuple[TableCell, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "label": self.label,
+            "cells": [cell.to_dict() for cell in self.cells],
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ExtractedTable:
+    table_index: int
+    title: str | None
+    units: str | None
+    columns: tuple[TableColumn, ...]
+    rows: tuple[TableRow, ...]
+    footnotes: list[str]
+    markdown: str
+    source_html_hash: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "table_index": self.table_index,
+            "title": self.title,
+            "units": self.units,
+            "columns": [column.to_dict() for column in self.columns],
+            "rows": [row.to_dict() for row in self.rows],
+            "footnotes": self.footnotes,
+            "markdown": self.markdown,
+            "source_html_hash": self.source_html_hash,
+        }
+
+
+@dataclass(slots=True)
+class _Node:
+    tag: str
+    attrs: dict[str, str]
+    children: list[_Node | str] = field(default_factory=list)
+    parent: _Node | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class _RawCell:
+    text: str
+    colspan: int
+    facts: tuple[InlineFact, ...]
+
+
+class _TreeParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.root = _Node(tag="document", attrs={})
+        self._stack = [self.root]
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "br":
+            self._stack[-1].children.append("\n")
+            return
+
+        node = _Node(
+            tag=tag.lower(),
+            attrs={key.lower(): value or "" for key, value in attrs},
+            parent=self._stack[-1],
+        )
+        self._stack[-1].children.append(node)
+        if tag.lower() not in _VOID_TAGS:
+            self._stack.append(node)
+
+    def handle_endtag(self, tag: str) -> None:
+        normalized = tag.lower()
+        for index in range(len(self._stack) - 1, 0, -1):
+            if self._stack[index].tag == normalized:
+                del self._stack[index:]
+                return
+
+    def handle_data(self, data: str) -> None:
+        if data:
+            self._stack[-1].children.append(data)
+
+
+def extract_sec_tables(html: str) -> list[ExtractedTable]:
+    parser = _TreeParser()
+    parser.feed(html)
+    html_hash = hashlib.sha256(html.encode("utf-8")).hexdigest()
+
+    tables: list[ExtractedTable] = []
+    for table_node in _iter_nodes(parser.root, "table"):
+        raw_rows = _raw_rows(table_node)
+        if not _is_meaningful(raw_rows):
+            continue
+
+        context = _table_context(table_node)
+        normalized = _normalize_rows(raw_rows)
+        if normalized is None:
+            continue
+
+        columns, rows = normalized
+        markdown = _to_markdown(columns, rows, context["footnotes"])
+        tables.append(
+            ExtractedTable(
+                table_index=len(tables),
+                title=context["title"],
+                units=context["units"],
+                columns=tuple(columns),
+                rows=tuple(rows),
+                footnotes=context["footnotes"],
+                markdown=markdown,
+                source_html_hash=html_hash,
+            )
+        )
+
+    return tables
+
+
+def tables_to_json(tables: list[ExtractedTable]) -> list[dict[str, Any]]:
+    return [table.to_dict() for table in tables]
+
+
+def tables_to_markdown(tables: list[ExtractedTable]) -> str:
+    blocks: list[str] = []
+    for table in tables:
+        lines: list[str] = []
+        if table.title:
+            lines.append(f"## {table.title}")
+        else:
+            lines.append(f"## Table {table.table_index + 1}")
+        if table.units:
+            lines.append(f"_Units: {table.units}_")
+        lines.append(table.markdown)
+        blocks.append("\n\n".join(lines))
+    return "\n\n".join(blocks)
+
+
+def _iter_nodes(node: _Node, tag: str) -> list[_Node]:
+    matches: list[_Node] = []
+    for child in node.children:
+        if isinstance(child, _Node):
+            if child.tag == tag:
+                matches.append(child)
+            matches.extend(_iter_nodes(child, tag))
+    return matches
+
+
+def _node_text(node: _Node) -> str:
+    parts: list[str] = []
+    for child in node.children:
+        if isinstance(child, str):
+            parts.append(child)
+        else:
+            parts.append(_node_text(child))
+    return _clean_text(" ".join(parts))
+
+
+def _clean_text(text: str) -> str:
+    return " ".join(text.replace("\xa0", " ").split())
+
+
+def _raw_rows(table_node: _Node) -> list[list[_RawCell]]:
+    rows: list[list[_RawCell]] = []
+    for row_node in _iter_direct_or_nested(table_node, "tr"):
+        cells: list[_RawCell] = []
+        for cell_node in _cell_nodes(row_node):
+            cells.append(
+                _RawCell(
+                    text=_clean_cell_text(_node_text(cell_node)),
+                    colspan=_positive_int(cell_node.attrs.get("colspan"), default=1),
+                    facts=tuple(_facts(cell_node)),
+                )
+            )
+        if cells:
+            rows.append(cells)
+    return rows
+
+
+def _iter_direct_or_nested(node: _Node, tag: str) -> list[_Node]:
+    matches: list[_Node] = []
+    for child in node.children:
+        if not isinstance(child, _Node):
+            continue
+        if child.tag == tag:
+            matches.append(child)
+        elif child.tag in {"thead", "tbody", "tfoot"}:
+            matches.extend(_iter_direct_or_nested(child, tag))
+    return matches
+
+
+def _cell_nodes(row_node: _Node) -> list[_Node]:
+    return [
+        child
+        for child in row_node.children
+        if isinstance(child, _Node) and child.tag in {"td", "th"}
+    ]
+
+
+def _positive_int(value: str | None, *, default: int) -> int:
+    if value is None:
+        return default
+    try:
+        return max(int(value), 1)
+    except ValueError:
+        return default
+
+
+def _facts(node: _Node) -> list[InlineFact]:
+    facts: list[InlineFact] = []
+    for child in node.children:
+        if not isinstance(child, _Node):
+            continue
+        if child.tag in {"ix:nonfraction", "ix:nonnumeric", "nonfraction", "nonnumeric"}:
+            facts.append(
+                InlineFact(
+                    name=child.attrs.get("name"),
+                    context_ref=child.attrs.get("contextref"),
+                    unit_ref=child.attrs.get("unitref"),
+                    decimals=child.attrs.get("decimals"),
+                    scale=child.attrs.get("scale"),
+                    fact_id=child.attrs.get("id"),
+                    value=_node_text(child),
+                )
+            )
+        facts.extend(_facts(child))
+    return facts
+
+
+def _clean_cell_text(text: str) -> str:
+    if text in {"—", "–"}:
+        return "-"
+    text = text.replace("$ ", "$")
+    text = re.sub(r"\(\s+([\d,]+)\s+\)", r"(\1)", text)
+    return text
+
+
+def _is_meaningful(rows: list[list[_RawCell]]) -> bool:
+    texts = [cell.text for row in rows for cell in row if cell.text]
+    if len(texts) < 2:
+        return False
+    return any(_looks_numeric(text) for text in texts)
+
+
+def _looks_numeric(text: str) -> bool:
+    return bool(_AMOUNT_RE.match(text) or re.match(r"^\(?\d+\)?%?$", text))
+
+
+def _table_context(table_node: _Node) -> dict[str, Any]:
+    anchor = _context_anchor(table_node)
+    previous = _nearby_text(anchor, direction=-1, limit=4)
+    following = _nearby_text(anchor, direction=1, limit=4)
+    title = _title_from_previous(previous)
+    units = _units_from_text(previous)
+    footnotes = [text for text in following if _FOOTNOTE_RE.match(text)]
+    return {"title": title, "units": units, "footnotes": footnotes}
+
+
+def _context_anchor(table_node: _Node) -> _Node:
+    parent = table_node.parent
+    if parent is None:
+        return table_node
+    element_children = [child for child in parent.children if isinstance(child, _Node)]
+    if element_children == [table_node]:
+        return parent
+    return table_node
+
+
+def _nearby_text(node: _Node, *, direction: int, limit: int) -> list[str]:
+    parent = node.parent
+    if parent is None:
+        return []
+
+    siblings = parent.children
+    index = next(index for index, sibling in enumerate(siblings) if sibling is node)
+    step = -1 if direction < 0 else 1
+    texts: list[str] = []
+    cursor = index + step
+    while 0 <= cursor < len(siblings) and len(texts) < limit:
+        sibling = siblings[cursor]
+        if isinstance(sibling, _Node) and sibling.tag == "table":
+            break
+        if isinstance(sibling, _Node):
+            text = _node_text(sibling)
+            if text:
+                texts.append(text)
+        cursor += step
+    if direction < 0:
+        texts.reverse()
+    return texts
+
+
+def _title_from_previous(texts: list[str]) -> str | None:
+    for text in reversed(texts):
+        if _UNIT_RE.search(text):
+            continue
+        if text.lower().startswith("the following table"):
+            continue
+        return text
+    return None
+
+
+def _units_from_text(texts: list[str]) -> str | None:
+    for text in reversed(texts):
+        match = _UNIT_RE.search(text)
+        if match:
+            return match.group(1)
+    return None
+
+
+def _normalize_rows(
+    raw_rows: list[list[_RawCell]],
+) -> tuple[list[TableColumn], list[TableRow]] | None:
+    header_row = _first_text_row(raw_rows)
+    if header_row is None:
+        return None
+
+    header_tokens = _nonempty_texts(header_row)
+    data_rows = raw_rows[raw_rows.index(header_row) + 1 :]
+    if "Change" in header_tokens:
+        return _normalize_sales_change_table(header_tokens, data_rows)
+    return _normalize_simple_table(header_tokens, data_rows)
+
+
+def _first_text_row(rows: list[list[_RawCell]]) -> list[_RawCell] | None:
+    for row in rows:
+        if len(_nonempty_texts(row)) >= 2:
+            return row
+    return None
+
+
+def _nonempty_texts(row: list[_RawCell]) -> list[str]:
+    return [cell.text for cell in row if cell.text]
+
+
+def _normalize_sales_change_table(
+    header_tokens: list[str],
+    raw_rows: list[list[_RawCell]],
+) -> tuple[list[TableColumn], list[TableRow]] | None:
+    data_headers: list[str] = []
+    last_year: str | None = None
+    for token in header_tokens:
+        if re.fullmatch(r"\d{4}", token):
+            last_year = token
+            data_headers.append(f"{token} Sales")
+        elif token == "Change" and last_year:
+            data_headers.append(f"{last_year} Change")
+
+    columns = [TableColumn("Category"), *[TableColumn(label) for label in data_headers]]
+    rows: list[TableRow] = []
+    for raw_row in raw_rows:
+        row = _sales_change_row(raw_row, expected_values=len(data_headers))
+        if row is not None:
+            rows.append(row)
+
+    if not rows:
+        return None
+    return columns, rows
+
+
+def _sales_change_row(row: list[_RawCell], *, expected_values: int) -> TableRow | None:
+    tokens = [cell for cell in row if cell.text]
+    if len(tokens) < 2:
+        return None
+
+    label = tokens[0].text
+    values: list[TableCell] = []
+    index = 1
+    while index < len(tokens) and len(values) < expected_values:
+        if _next_value_is_change(values):
+            text, consumed = _consume_change(tokens[index:])
+        else:
+            text, consumed = _consume_amount(tokens[index:])
+        if not text or consumed == 0:
+            index += 1
+            continue
+        facts = tuple(fact for cell in tokens[index : index + consumed] for fact in cell.facts)
+        values.append(TableCell(text=text, facts=facts))
+        index += consumed
+
+    if len(values) != expected_values:
+        return None
+    return TableRow(label=label, cells=tuple(values))
+
+
+def _next_value_is_change(values: list[TableCell]) -> bool:
+    return len(values) % 2 == 1
+
+
+def _consume_amount(cells: list[_RawCell]) -> tuple[str | None, int]:
+    if not cells:
+        return None, 0
+    if cells[0].text == "$" and len(cells) > 1:
+        return f"${cells[1].text}", 2
+    if cells[0].text.startswith("$"):
+        return cells[0].text, 1
+    if _AMOUNT_RE.match(cells[0].text):
+        return cells[0].text, 1
+    return None, 0
+
+
+def _consume_change(cells: list[_RawCell]) -> tuple[str | None, int]:
+    if cells and cells[0].text.endswith("%"):
+        return cells[0].text, 1
+
+    collected: list[str] = []
+    for cell in cells:
+        if cell.text == "%":
+            break
+        if not collected or cell.text != collected[-1]:
+            collected.append(cell.text)
+    if not collected:
+        return None, 0
+
+    consumed = 0
+    for cell in cells:
+        consumed += 1
+        if cell.text == "%":
+            break
+
+    if collected == ["-"]:
+        return "-", consumed
+    return f"{collected[0]}%", consumed
+
+
+def _normalize_simple_table(
+    header_tokens: list[str],
+    raw_rows: list[list[_RawCell]],
+) -> tuple[list[TableColumn], list[TableRow]] | None:
+    columns = _simple_columns(header_tokens)
+    expected_values = len(columns) - 1
+    rows: list[TableRow] = []
+    for raw_row in raw_rows:
+        tokens = [cell for cell in raw_row if cell.text]
+        if len(tokens) < 2:
+            continue
+        label = tokens[0].text
+        values: list[TableCell] = []
+        index = 1
+        while index < len(tokens) and len(values) < expected_values:
+            text, consumed = _consume_amount(tokens[index:])
+            if not text:
+                text = _normalize_value_cell(tokens[index].text)
+                consumed = 1
+            facts = tuple(fact for cell in tokens[index : index + consumed] for fact in cell.facts)
+            values.append(TableCell(text=text, facts=facts))
+            index += consumed
+        if len(values) == expected_values:
+            rows.append(TableRow(label=label, cells=tuple(values)))
+
+    if not rows:
+        return None
+    return columns, rows
+
+
+def _simple_columns(header_tokens: list[str]) -> list[TableColumn]:
+    if header_tokens and not _looks_like_value_header(header_tokens[0]):
+        return [TableColumn(label) for label in header_tokens]
+    return [TableColumn("Metric"), *[TableColumn(label) for label in header_tokens]]
+
+
+def _looks_like_value_header(text: str) -> bool:
+    if re.fullmatch(r"\d{4}", text):
+        return True
+    if re.search(r"\b\d{4}\b", text):
+        return True
+    return text.lower() in {"amount", "value"}
+
+
+def _normalize_value_cell(text: str) -> str:
+    return text.replace("$ ", "$")
+
+
+def _to_markdown(
+    columns: list[TableColumn],
+    rows: list[TableRow],
+    footnotes: list[str],
+) -> str:
+    header = "| " + " | ".join(column.label for column in columns) + " |"
+    separator = "| " + " | ".join("---" for _ in columns) + " |"
+    body = [
+        "| "
+        + " | ".join([row.label, *[cell.text for cell in row.cells]])
+        + " |"
+        for row in rows
+    ]
+    lines = [header, separator, *body]
+    if footnotes:
+        lines.extend(["", *footnotes])
+    return "\n".join(lines)
+</file>
+
+<file path="scripts/smoke_all_brief_questions.py">
+"""Batch-execute and audit all 10 standard analyst questions from your client brief."""
+
+from __future__ import annotations
+
+import asyncio
+import argparse
+import sys
+import uuid
+from pathlib import Path
+
+# Add backend root to sys.path for direct script execution
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from app.assistant.agent import run_document_agent
+from app.assistant.deps import DocumentAgentDeps, TurnRegistry
+from app.grounding.validator import GroundingValidator
+from app.retrieval.retriever import DocumentRetriever
+from app.retrieval.types import format_passages_for_agent, SearchFilters
+
+QUESTIONS = [
+    (
+        1,
+        "Across Apple's 2021–2025 10-Ks, how did the revenue mix between iPhone, Services, Mac, and iPad change, "
+        "and which category appears to have contributed most to any mix shift?",
+        "AAPL",
+    ),
+    (
+        2,
+        "For Amazon, compare AWS operating income and margin against North America and International from 2021–2025. "
+        "In which years did AWS appear to fund losses or weaker profitability elsewhere?",
+        "AMZN",
+    ),
+    (
+        3,
+        "How did NVIDIA describe demand drivers, customer concentration, and supply constraints for its Data Center business "
+        "from fiscal 2021 through fiscal 2025?",
+        "NVDA",
+    ),
+    (
+        4,
+        "Across Microsoft's 2021–2025 filings, what changed in the way the company describes Azure, AI infrastructure, "
+        "and cloud capacity constraints?",
+        "MSFT",
+    ),
+    (
+        5,
+        "For Alphabet, how did Google Search, YouTube ads, Google Network, subscriptions/platforms/devices, and Google Cloud "
+        "revenue trends differ across the available 10-Ks?",
+        "GOOGL",
+    ),
+    (
+        6,
+        "Which of the five companies added, removed, or materially changed risk-factor language related to AI, cloud infrastructure, "
+        "export controls, supply chain concentration, or regulation between 2021 and 2025?",
+        None,  # Cross-company lookup (no ticker restriction)
+    ),
+    (
+        7,
+        "For Apple and NVIDIA, what do the filings say about supplier concentration or dependence on third-party manufacturing, "
+        "and did the wording become more or less urgent over time?",
+        None,  # Cross-company lookup
+    ),
+    (
+        8,
+        "Compare capital expenditures and purchase commitments for Microsoft, Alphabet, Amazon, and NVIDIA. "
+        "What do the filings imply about the scale and timing of AI/cloud infrastructure investment?",
+        None,  # Cross-company lookup
+    ),
+    (
+        9,
+        "For each company, summarize the most important geographic revenue exposures disclosed in the latest 10-K, "
+        "then identify any year-over-year changes that could matter to an analyst.",
+        None,  # Cross-company lookup
+    ),
+    (
+        10,
+        "If an analyst asks whether the filings prove that generative AI improved margins for any of these companies, "
+        "what evidence exists in the corpus, and where should the bot refuse to infer beyond the filings?",
+        None,  # Cross-company lookup
+    ),
+]
+
+
+async def execute_question(index: int, query: str, ticker: str | None, output_file=None):
+    print("\n" + "="*80)
+    print(f"QUESTION {index}: {query}")
+    print(f"Ticker Filter: {ticker or 'Cross-Company'}")
+    print("="*80, flush=True)
+
+    # 1. Run direct hybrid SQL retrieval
+    print("  -> Retrieving matching source database chunks...", end="", flush=True)
+    retriever = DocumentRetriever()
+    filters = SearchFilters(ticker=ticker) if ticker else None
+    
+    try:
+        passages = retriever.search(query, filters=filters, top_k=8)
+        print(f" OK (Retrieved {len(passages)} passages)", flush=True)
+    except Exception as e:
+        print(f" FAILED: {e}", flush=True)
+        return False
+
+    if not passages:
+        print("  -> WARNING: No matching chunks found. Proceeding with empty context.", flush=True)
+
+    # 2. Setup Registries and Context wrappers
+    registry = TurnRegistry()
+    registry.register_many(passages)
+    context_text = format_passages_for_agent(passages)
+
+    deps = DocumentAgentDeps(
+        retriever=retriever,
+        registry=registry,
+        thread_id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+    )
+
+    # 3. Call PydanticAI / Llama Async execution loop
+    print("  -> Contacting Groq Cloud / Llama 3.3 for grounded synthesis...", end="", flush=True)
+    try:
+        answer = await run_document_agent(query, context_text, deps)
+        print(" OK", flush=True)
+    except Exception as e:
+        print(f" FAILED: {e}", flush=True)
+        return False
+
+    # 4. Execute post-agent grounding validator
+    print("  -> Running Grounding Validation and auto-healer checks...", end="", flush=True)
+    validator = GroundingValidator()
+    validation = await validator.validate(answer, registry)
+    print(f" DONE (Result: ok={validation.ok})", flush=True)
+
+    # Format results output
+    result_block = []
+    result_block.append(f"\n==================================================")
+    result_block.append(f"QUESTION {index} RESULTS:")
+    result_block.append(f"Query: {query}")
+    result_block.append(f"Validation OK: {validation.ok}")
+    if validation.error:
+        result_block.append(f"Validation Error: {validation.error}")
+    result_block.append(f"Insufficient Evidence: {answer.insufficient_evidence}")
+    result_block.append(f"Total Citations Attached: {len(answer.citations)}")
+    result_block.append(f"==================================================")
+    result_block.append(f"\nAnswer:\n{answer.answer}\n")
+    
+    if answer.citations:
+        result_block.append("Citations:")
+        for citation in answer.citations:
+            passage = registry.passages_by_chunk_id.get(uuid.UUID(citation.chunk_id))
+            source = f"{passage.ticker} {passage.form} p.{passage.page or 'N/A'}" if passage else "Unknown Source"
+            result_block.append(f"  [{citation.citation_index}] Source: {source}")
+            result_block.append(f"      Excerpt: \"{citation.excerpt}\"")
+    result_block.append("\n" + "-"*50 + "\n")
+
+    formatted_text = "\n".join(result_block)
+    print(formatted_text, flush=True)
+
+    if output_file:
+        with open(output_file, "a", encoding="utf-8") as f:
+            f.write(formatted_text)
+
+    return validation.ok
+
+
+async def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--question",
+        type=int,
+        choices=range(1, 11),
+        help="Run a single question by its index (1 to 10) to preserve rate-limits.",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run the complete suite of all 10 questions sequentially.",
+    )
+    args = parser.parse_args()
+
+    if not args.question and not args.all:
+        parser.print_help()
+        print("\nExample: uv run python scripts/smoke_all_brief_questions.py --question 1")
+        return
+
+    output_file = Path("scratch/smoke_all_results.txt")
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Initialize or wipe output file on new run
+    if args.all:
+        output_file.write_text("=== COMPLETE DRIFTWOOD CO-PILOT BATCH VERIFICATION ===\n\n", encoding="utf-8")
+        print("Running full Driftwood verification suite sequentially. Standard rate-limit delays will be applied.")
+        success_count = 0
+        for index, query, ticker in QUESTIONS:
+            ok = await execute_question(index, query, ticker, output_file)
+            if ok:
+                success_count += 1
+            # Apply a 5-second sleep delay to protect the Groq API quota
+            await asyncio.sleep(5)
+        
+        print("\n" + "="*80)
+        print(f"BATCH COMPLETED: {success_count}/10 questions successfully synthesized and grounded!")
+        print(f"Full results transcript committed to: {output_file}")
+        print("="*80)
+    else:
+        # Run single question selectively
+        index, query, ticker = next(q for q in QUESTIONS if q[0] == args.question)
+        await execute_question(index, query, ticker)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+</file>
+
+<file path="scripts/smoke_assistant.py">
+"""Run a standalone agent turn locally to test the retrieval, tools, and grounding layers."""
+
+from __future__ import annotations
+
+import asyncio
+import uuid
+
+from app.assistant.agent import run_document_agent
+from app.assistant.deps import DocumentAgentDeps, TurnRegistry
+from app.grounding.validator import GroundingValidator
+from app.retrieval.retriever import DocumentRetriever
+
+QUERY = "Across Apple's recent 10-Ks, what did they say about Services net sales growth and its primary drivers?"
+
+
+async def test_agent_turn():
+    print(f"Initiating stand-alone agent smoke test...")
+    print(f"Query: '{QUERY}'\n")
+
+    registry = TurnRegistry()
+    retriever = DocumentRetriever()
+
+    def on_status(stage: str, message: str) -> None:
+        print(f"  [Pipeline Status] {stage.upper()}: {message}")
+
+    deps = DocumentAgentDeps(
+        retriever=retriever,
+        registry=registry,
+        thread_id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+        on_status=on_status,
+    )
+
+    # 1. Execute the agent run
+    print("Executing PydanticAI Agent...")
+    answer = await asyncio.to_thread(run_document_agent, QUERY, deps)
+
+    # 2. Execute grounding validation
+    print("\nExecuting Grounding Validation...")
+    validator = GroundingValidator()
+    validation = await validator.validate(answer, registry)
+
+    print("\n" + "=" * 80)
+    print("RESULTS:")
+    print(f"  Validation OK: {validation.ok}")
+    if validation.error:
+        print(f"  Validation Error: {validation.error}")
+    print(f"  Insufficient Evidence: {answer.insufficient_evidence}")
+    print(f"  Total Citations: {len(answer.citations)}")
+    print("=" * 80)
+
+    print(f"\nAnswer:\n{answer.answer}\n")
+
+    if answer.citations:
+        print("Citations:")
+        for citation in answer.citations:
+            # Safely parse the string chunk_id to UUID to match the registry dictionary keys
+            try:
+                parsed_id = uuid.UUID(citation.chunk_id.strip())
+                passage = registry.passages_by_chunk_id.get(parsed_id)
+            except ValueError:
+                passage = None
+
+            source = f"{passage.ticker} {passage.form} p.{passage.page}" if passage else "Unknown Source"
+            print(f"  [{citation.citation_index}] Source: {source}")
+            print(f"      Excerpt: \"{citation.excerpt}\"")
+
+
+if __name__ == "__main__":
+    asyncio.run(test_agent_turn())
+</file>
+
+<file path="scripts/smoke_retrieval.py">
+"""Print top retrieval hits for sample queries. Run using: uv run python scripts/smoke_retrieval.py"""
+
+from __future__ import annotations
+
+from app.retrieval.retriever import DocumentRetriever
+from app.retrieval.types import SearchFilters, format_passages_for_agent
+
+SMOKE_QUERIES: list[tuple[str, SearchFilters | None]] = [
+    (
+        "Across Apple's 10-Ks, how did the revenue mix between iPhone, Services, Mac, and iPad change?",
+        SearchFilters(ticker="AAPL"),
+    ),
+    (
+        "How did NVIDIA describe demand drivers and customer concentration for its Data Center business?",
+        SearchFilters(ticker="NVDA"),
+    ),
+]
+
+
+def main() -> None:
+    retriever = DocumentRetriever()
+    for query, filters in SMOKE_QUERIES:
+        print("\n" + "=" * 80)
+        print(f"Query: {query}")
+        if filters is not None:
+            print(f"Filters: {filters.model_dump_json()}")
+        passages = retriever.search(query, filters=filters, top_k=5)
+        print(format_passages_for_agent(passages))
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path=".dockerignore">
+.env
+.env.*
+!.env.example
+.venv
+__pycache__
+.pytest_cache
+.ruff_cache
+*.pyc
+</file>
+
+<file path="AGENTS.md">
+# Backend — agent notes
+
+This is the FastAPI service for Document Copilot. Read [../AGENTS.md](../AGENTS.md) first — universal building rules live there. This file adds backend-specific conventions.
+
+## Stack
+
+- Python 3.12+
+- FastAPI + uvicorn
+- Pydantic v2 + pydantic-settings
+- `httpx` for outbound HTTP
+- `pytest` for tests
+- Supabase Python client (DB + auth)
+- SQLAlchemy models + Alembic migrations for database schema changes
+- OpenAI SDK for LLM & embeddings
+- Supabase `pgvector` for semantic search and Postgres full-text search for keyword retrieval. Hybrid search should run vector and full-text queries separately, then fuse ranked results in Python with Reciprocal Rank Fusion.
+- `structlog` for logging
+- `uv` for dependency + project management
+
+## Dependency policy
+
+See universal policy in [../AGENTS.md](../AGENTS.md). Backend-specific:
+
+- **Prefer stdlib:** `pathlib`, `datetime`, `uuid`, `enum`, `dataclasses`, `asyncio`, `collections`, `itertools`, `json`, `urllib`.
+- **Not OK without justification:** `python-dateutil`, `toolz`, `funcy`, `more-itertools`, small JSON/string micro-libs, "ergonomic" wrappers on top of declared SDKs.
+- Dev deps (test/lint/build) have a looser bar but still pick widely-used, low-footprint tools (`pytest`, `ruff`, `httpx`).
+
+## Layout (to be created during build)
+
+```text
+backend/
+├── alembic/
+│   ├── env.py           # Imports app database metadata for autogenerate
+│   └── versions/        # Reviewed migration files
+├── alembic.ini
+├── app/
+│   ├── main.py          # FastAPI entrypoint
+│   ├── config.py        # Pydantic settings — single source of truth for env
+│   ├── api/             # FastAPI routers (chat, ingest, auth)
+│   ├── auth/            # Supabase JWT verification + current user dependency
+│   ├── chat/            # turn orchestration, AI SDK message conversion, streaming
+│   ├── assistant/       # PydanticAI agent, deps, outputs, instructions
+│   ├── retrieval/       # pgvector/full-text queries, RRF fusion, source passage lookup
+│   ├── grounding/       # citation validation and answer grounding checks
+│   ├── database/        # SQLAlchemy models, Supabase client wrapper, typed query helpers
+│   └── prompts/         # prompt/instruction templates if not colocated with assistant
+├── ingest/              # one-off ingestion scripts (Markdown extraction, chunking, embedding, Supabase writes)
+├── tests/
+└── pyproject.toml
+```
+
+## Code style (backend-specific)
+
+- **Type hints on public functions and module-level things.** Don't annotate every local.
+- **Async by default in request-path code.** Don't run blocking I/O on the event loop. Tempfile + small synchronous file reads are OK (they're fast); network calls must be async.
+- **Use `async def` for all route handlers** and any I/O service function.
+- **Validate at boundaries only.** HTTP input is validated by Pydantic models. External API responses are validated when parsed. Internal callers are trusted.
+
+## Configuration
+
+- `app.config.settings` is the single source of truth. Import settings where needed; never call `os.getenv` in app code, never call `load_dotenv`.
+- If a third-party SDK reads `os.environ` directly, add the mirror in `config.py` — don't sprinkle `setdefault` elsewhere.
+- Fail fast on startup when required env vars are missing.
+
+## Database migrations
+
+- Alembic is the source of truth for schema changes. Do not change production tables manually in the Supabase dashboard.
+- SQLAlchemy models describe normal tables and columns. Alembic autogenerate creates candidate migrations, but every generated migration must be reviewed before applying.
+- Supabase/Postgres-specific features belong in explicit migration operations: `create extension vector`, generated `tsvector` columns, HNSW/GIN indexes, RLS enablement, and RLS policies.
+- Alembic must use the direct/session database connection, not the Supabase transaction pooler URL.
+- Run migrations from `backend/` with `uv run alembic upgrade head`.
+
+## Tests
+
+- **Prefer unit over integration.** Mock at the service boundary.
+- Fast suite (`pytest -m "not integration"`) must stay green and hit no network / no DB.
+- Integration tests go behind `@pytest.mark.integration` and may require live OpenAI / Supabase credentials.
+- Tests live next to what they test (`retrieval/retriever.py` → `tests/retrieval/test_retriever.py`).
+- Required test coverage: ingestion logic, retrieval, citation extraction, grounding enforcement.
+
+## Anti-patterns (rejected)
+
+- `os.getenv` / `load_dotenv` in modules.
+- Wrapping FastAPI responses in custom envelope classes.
+- Over-catching `Exception` just to log and re-raise; let it propagate.
+- Shared state through globals instead of FastAPI `app.state` or DI.
+- Silent fallbacks that hide real config errors.
+- Mocking the LLM in unit tests without also testing the grounding contract — the prompt is the product.
+</file>
+
+<file path="alembic.ini">
+# A generic, single database configuration.
+
+[alembic]
+# path to migration scripts.
+# this is typically a path given in POSIX (e.g. forward slashes)
+# format, relative to the token %(here)s which refers to the location of this
+# ini file
+script_location = alembic
+
+# template used to generate migration file names; The default value is %%(rev)s_%%(slug)s
+# Uncomment the line below if you want the files to be prepended with date and time
+# see https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file
+# for all available tokens
+# file_template = %%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s
+# Or organize into date-based subdirectories (requires recursive_version_locations = true)
+# file_template = %%(year)d/%%(month).2d/%%(day).2d_%%(hour).2d%%(minute).2d_%%(second).2d_%%(rev)s_%%(slug)s
+
+# sys.path path, will be prepended to sys.path if present.
+# defaults to the current working directory.  for multiple paths, the path separator
+# is defined by "path_separator" below.
+prepend_sys_path = .
+
+
+# timezone to use when rendering the date within the migration file
+# as well as the filename.
+# If specified, requires the tzdata library which can be installed by adding
+# `alembic[tz]` to the pip requirements.
+# string value is passed to ZoneInfo()
+# leave blank for localtime
+# timezone =
+
+# max length of characters to apply to the "slug" field
+# truncate_slug_length = 40
+
+# set to 'true' to run the environment during
+# the 'revision' command, regardless of autogenerate
+# revision_environment = false
+
+# set to 'true' to allow .pyc and .pyo files without
+# a source .py file to be detected as revisions in the
+# versions/ directory
+# sourceless = false
+
+# version location specification; This defaults
+# to <script_location>/versions.  When using multiple version
+# directories, initial revisions must be specified with --version-path.
+# The path separator used here should be the separator specified by "path_separator"
+# below.
+# version_locations = %(here)s/bar:%(here)s/bat:%(here)s/alembic/versions
+
+# path_separator; This indicates what character is used to split lists of file
+# paths, including version_locations and prepend_sys_path within configparser
+# files such as alembic.ini.
+# The default rendered in new alembic.ini files is "os", which uses os.pathsep
+# to provide os-dependent path splitting.
+#
+# Note that in order to support legacy alembic.ini files, this default does NOT
+# take place if path_separator is not present in alembic.ini.  If this
+# option is omitted entirely, fallback logic is as follows:
+#
+# 1. Parsing of the version_locations option falls back to using the legacy
+#    "version_path_separator" key, which if absent then falls back to the legacy
+#    behavior of splitting on spaces and/or commas.
+# 2. Parsing of the prepend_sys_path option falls back to the legacy
+#    behavior of splitting on spaces, commas, or colons.
+#
+# Valid values for path_separator are:
+#
+# path_separator = :
+# path_separator = ;
+# path_separator = space
+# path_separator = newline
+#
+# Use os.pathsep. Default configuration used for new projects.
+path_separator = os
+
+# set to 'true' to search source files recursively
+# in each "version_locations" directory
+# new in Alembic version 1.10
+# recursive_version_locations = false
+
+# the output encoding used when revision files
+# are written from script.py.mako
+# output_encoding = utf-8
+
+# database URL.  This is consumed by the user-maintained env.py script only.
+# other means of configuring database URLs may be customized within the env.py
+# file.
+sqlalchemy.url = driver://user:pass@localhost/dbname
+
+
+[post_write_hooks]
+# post_write_hooks defines scripts or Python functions that are run
+# on newly generated revision scripts.  See the documentation for further
+# detail and examples
+
+# format using "black" - use the console_scripts runner, against the "black" entrypoint
+# hooks = black
+# black.type = console_scripts
+# black.entrypoint = black
+# black.options = -l 79 REVISION_SCRIPT_FILENAME
+
+# lint with attempts to fix using "ruff" - use the module runner, against the "ruff" module
+# hooks = ruff
+# ruff.type = module
+# ruff.module = ruff
+# ruff.options = check --fix REVISION_SCRIPT_FILENAME
+
+# Alternatively, use the exec runner to execute a binary found on your PATH
+# hooks = ruff
+# ruff.type = exec
+# ruff.executable = ruff
+# ruff.options = check --fix REVISION_SCRIPT_FILENAME
+
+# Logging configuration.  This is also consumed by the user-maintained
+# env.py script only.
+[loggers]
+keys = root,sqlalchemy,alembic
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = WARNING
+handlers = console
+qualname =
+
+[logger_sqlalchemy]
+level = WARNING
+handlers =
+qualname = sqlalchemy.engine
+
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
+
+[formatter_generic]
+format = %(levelname)-5.5s [%(name)s] %(message)s
+datefmt = %H:%M:%S
+</file>
+
+<file path="Dockerfile">
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV PYTHONUNBUFFERED=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
+
+# Install high-speed uv package manager natively
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Copy dependency specifications first to leverage Docker layer caching
+COPY pyproject.toml uv.lock ./
+
+# Pass --no-cache to prevent saving duplicate installer zips on disk
+RUN uv sync --frozen --no-dev --no-install-project --no-cache
+
+# Copy application layers
+COPY alembic ./alembic
+COPY alembic.ini ./
+COPY app ./app
+COPY ingest ./ingest
+COPY scripts ./scripts
+
+# Perform final sync of your codebase packages with zero caching
+RUN uv sync --frozen --no-dev --no-cache
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+EXPOSE 8000
+
+# Start Uvicorn, mapping the listening port directly to the dynamic $PORT assigned by Railway
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+</file>
+
+<file path="pyproject.toml">
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "document-copilot-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic==1.18.4",
+    "fastapi==0.138.0",
+    "httpx==0.28.1",
+    "huggingface-hub==1.20.1",
+    "openai==2.43.0",
+    "pgvector==0.4.2",
+    "psycopg[binary]==3.3.4",
+    "pydantic==2.13.4",
+    "pydantic-ai==1.102.0",
+    "pydantic-settings==2.14.2",
+    "sentence-transformers==5.6.0",
+    "sqlalchemy==2.0.51",
+    "structlog==26.1.0",
+    "supabase==2.31.0",
+    "uvicorn==0.49.0",
+    "groq>=0.9.0",
+    "tiktoken>=0.7.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.uv]
+add-bounds = "exact"
+exclude-newer = "7 days"
+
+# Configure native CPU-only PyTorch index to avoid heavy CUDA GPU runtimes in production
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[dependency-groups]
+dev = [
+    "ipykernel==7.3.0",
+    "pytest==9.1.1",
+    "ruff==0.15.18",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"app/database/models/*.py" = ["F821"]
+</file>
+
+<file path="README.md">
+# Backend (FastAPI)
+
+Document Copilot API — retrieval, chat orchestration, and grounding.
+
+**Requires:** Python 3.12+, [uv](https://docs.astral.sh/uv/), a Supabase project.
+
+## Setup
+
+```bash
+cd backend
+uv sync
+```
+
+Copy env vars into `backend/.env` (see [supabase-setup](../docs/guides/supabase-setup.md)). Required keys are read by `app/config.py`:
+
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `DATABASE_URL` (direct Postgres host for Alembic — not the pooler URL)
+- `OPENAI_API_KEY`
+- `ALLOWED_ORIGINS` (e.g. `http://localhost:5173`)
+
+## Run
+
+```bash
+cd backend
+uv run uvicorn app.main:app --reload
+```
+
+API: `http://localhost:8000` · Health: `GET /health`
+
+Alternative:
+
+```bash
+uv run python app/main.py
+```
+
+## Dev
+
+```bash
+uv run pytest -m "not integration"   # unit tests
+uv run ruff check app                  # lint
+```
+
+## Migrations
+
+```bash
+uv run alembic upgrade head
+```
+
+Full Alembic workflow: [backend-setup](../docs/guides/backend-setup.md).
+</file>
+
+</files>
