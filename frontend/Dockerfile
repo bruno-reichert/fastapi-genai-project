@@ -24,10 +24,12 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
 # Compile the highly compressed static production bundle
 RUN pnpm build
 
-# Serve stage using high-performance Caddy web server
-FROM caddy:2-alpine
+# Serve stage using standard Debian Caddy (compatible with Render's security sandbox)
+FROM caddy:2
 
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/dist /srv
 
 EXPOSE 3000
+
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
