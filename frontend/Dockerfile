@@ -21,15 +21,15 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
     VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
     VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
-# Compile the highly compressed static production bundle
+# Compile static bundle
 RUN pnpm build
 
-# Serve stage using standard Debian Caddy (compatible with Render's security sandbox)
-FROM caddy:2
+# Serve stage using unprivileged Nginx (works on all cloud platforms)
+FROM nginxinc/nginx-unprivileged:alpine
 
-COPY Caddyfile /etc/caddy/Caddyfile
-COPY --from=build /app/dist /srv
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 3000
 
-CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+CMD ["nginx", "-g", "daemon off;"]
