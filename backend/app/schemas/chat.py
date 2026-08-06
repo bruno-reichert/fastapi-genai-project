@@ -81,12 +81,10 @@ class StatusPart(BaseModel):
 
 MessagePart = Annotated[TextPart | CitationPart, Field(discriminator="type")]
 
-
 class UIMessage(BaseModel):
     id: str | None = None
     role: Literal["user", "assistant", "system"]
     parts: list[MessagePart]
-
 
 class CreateThreadRequest(BaseModel):
     title: str | None = None
@@ -114,6 +112,16 @@ class StreamRequest(BaseModel):
 
     thread_id: uuid.UUID = Field(validation_alias="threadId")
     messages: list[UIMessage]
+
+class GenericPart(BaseModel):
+    type: str
+    model_config = ConfigDict(extra="allow")
+
+# Add GenericPart as a fallback so Pydantic never throws a 422 on custom SDK parts
+MessagePart = Annotated[
+    TextPart | CitationPart | GenericPart, 
+    Field(discriminator="type")
+]
 
 
 def thread_row_to_response(row: dict[str, Any]) -> ThreadResponse:
