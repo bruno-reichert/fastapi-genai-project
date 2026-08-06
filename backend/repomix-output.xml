@@ -32,7 +32,7 @@ The content is organized as follows:
 <notes>
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Files matching these patterns are excluded: **/node_modules/**, **/dist/**, **/build/**
+- Files matching these patterns are excluded: **/node_modules/**, **/dist/**, **/build/**, .next/**, **/*.png, **/*.svg
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 - Files are sorted by Git change count (files with more changes are at the bottom)
@@ -1406,6 +1406,15 @@ def title_from_user_message(message: UIMessage) -> str:
     if len(text) <= MAX_TITLE_LENGTH:
         return text
     return text[: MAX_TITLE_LENGTH - 3] + "..."
+
+def text_from_parts(parts: list[MessagePart]) -> str:
+    text_bits = []
+    for part in parts:
+        if isinstance(part, TextPart):
+            text_bits.append(part.text)
+        elif getattr(part, "type", None) == "text" and hasattr(part, "text"):
+            text_bits.append(part.text)
+    return "".join(text_bits)
 </file>
 
 <file path="app/chat/orchestrator.py">
@@ -2697,27 +2706,30 @@ __all__ = ["DocumentRetriever", "RetrievedPassage", "SearchFilters"]
 </file>
 
 <file path="app/retrieval/embeddings.py">
-"""Local query embedding generation using SentenceTransformer."""
+"""Lightweight query embedding generation using FastEmbed (ONNX) - Low RAM."""
 
 from __future__ import annotations
 
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 from app.config import settings
 
-_model: SentenceTransformer | None = None
+_model: TextEmbedding | None = None
 
 
-def _get_model() -> SentenceTransformer:
+def _get_model() -> TextEmbedding:
     global _model
     if _model is None:
-        _model = SentenceTransformer(settings.openai_embedding_model)
+        # Uses sentence-transformers/all-MiniLM-L6-v2 via ONNX runtime (~150MB RAM instead of ~700MB)
+        _model = TextEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
     return _model
 
 
 def embed_query(text: str) -> list[float]:
     model = _get_model()
-    emb = model.encode(text, show_progress_bar=False)
-    embedding = [float(x) for x in emb]
+    # FastEmbed returns a generator of numpy arrays
+    embeddings = list(model.embed([text]))
+    embedding = [float(x) for x in embeddings[0]]
+    
     expected_dims = settings.openai_embedding_dimensions
     if len(embedding) != expected_dims:
         raise ValueError(
@@ -3322,12 +3334,10 @@ class StatusPart(BaseModel):
 
 MessagePart = Annotated[TextPart | CitationPart, Field(discriminator="type")]
 
-
 class UIMessage(BaseModel):
     id: str | None = None
     role: Literal["user", "assistant", "system"]
     parts: list[MessagePart]
-
 
 class CreateThreadRequest(BaseModel):
     title: str | None = None
@@ -3355,6 +3365,16 @@ class StreamRequest(BaseModel):
 
     thread_id: uuid.UUID = Field(validation_alias="threadId")
     messages: list[UIMessage]
+
+class GenericPart(BaseModel):
+    type: str
+    model_config = ConfigDict(extra="allow")
+
+# Add GenericPart as a fallback so Pydantic never throws a 422 on custom SDK parts
+MessagePart = Annotated[
+    TextPart | CitationPart | GenericPart, 
+    Field(discriminator="type")
+]
 
 
 def thread_row_to_response(row: dict[str, Any]) -> ThreadResponse:
@@ -5484,7 +5504,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000
 
 # Start Uvicorn, mapping the listening port directly to the dynamic $PORT assigned by Railway
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
 </file>
 
 <file path="pyproject.toml">
@@ -5507,13 +5527,13 @@ dependencies = [
     "pydantic==2.13.4",
     "pydantic-ai==1.102.0",
     "pydantic-settings==2.14.2",
-    "sentence-transformers==5.6.0",
     "sqlalchemy==2.0.51",
     "structlog==26.1.0",
     "supabase==2.31.0",
     "uvicorn==0.49.0",
     "groq>=0.9.0",
     "tiktoken>=0.7.0",
+    "fastembed==0.8.0",
 ]
 
 [tool.hatch.build.targets.wheel]

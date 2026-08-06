@@ -117,11 +117,20 @@ class GenericPart(BaseModel):
     type: str
     model_config = ConfigDict(extra="allow")
 
-# Add GenericPart as a fallback so Pydantic never throws a 422 on custom SDK parts
+# UPDATED LINE:
 MessagePart = Annotated[
-    TextPart | CitationPart | GenericPart, 
+    TextPart | CitationPart | StatusPart, 
     Field(discriminator="type")
 ]
+
+class StatusPayload(BaseModel):
+    stage: str
+    message: str
+
+
+class StatusPart(BaseModel):
+    type: Literal["data-status"] = "data-status"
+    data: StatusPayload
 
 
 def thread_row_to_response(row: dict[str, Any]) -> ThreadResponse:
