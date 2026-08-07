@@ -1,14 +1,26 @@
 # Document Copilot
 
-**Nota:** Este projeto foi desenvolvido a partir do tutorial de Dave Ebbelaar (https://youtu.be/qF5il_9IwME?si=jqpveg7OSjtk6E19) adaptado e implementado por mim como parte do meu aprendizado em FastAPI, RAG e engenharia de IA aplicada — incluindo uma migração completa da stack de IA original (OpenAI) para uma alternativa gratuita (Groq/Llama), detalhada na seção abaixo.
+**🔗 Demo ao vivo:** [fastapi-genai-project-1.onrender.com](https://fastapi-genai-project-1.onrender.com/)
+
+Conta de teste para explorar o assistente sem precisar criar uma conta própria: `email: newtest@driftwood.com` / `senha: newtest1`
+
+*Nota: por estar em um plano gratuito, a primeira requisição pode levar alguns segundos enquanto o serviço "acorda".*
+
+---
+
+**Nota:** Este projeto foi desenvolvido a partir do tutorial de Dave Ebbelaar (https://youtu.be/qF5il_9IwME?si=jqpveg7OSjtk6E19) adaptado e implementado por mim como parte do meu aprendizado em FastAPI, RAG e engenharia de IA aplicada — incluindo uma migração completa da stack de IA original (OpenAI) para uma alternativa gratuita (Groq/Llama), e uma otimização significativa de memória para viabilizar o deploy em hospedagem gratuita, ambas detalhadas abaixo.
 
 _Este projeto segue o tutorial de Dave Ebbelaar (https://github.com/daveebbelaar/document-copilot/tree/development), que originalmente usa modelos pagos da OpenAI (GPT-5.5 para geração, com embeddings de 1536 dimensões). Para viabilizar o projeto sem custos, adaptei toda a stack de IA para usar o Llama 3.3 70B via GroqCloud (plano gratuito) e embeddings locais de 384 dimensões (all-MiniLM-L6-v2).
 Essa mudança trouxe desafios técnicos reais: modelos open-weight como o Llama não sustentam com a mesma confiabilidade o tool-calling nativo que o GPT-5.5 usa para buscar contexto de forma agressiva durante a geração. Depois de diversas tentativas com esse padrão, refatorei a arquitetura do agente para injetar o contexto recuperado diretamente no prompt (em vez de depender de chamadas de ferramentas), e implementei um parser próprio para extrair e validar JSON estruturado a partir da resposta bruta do modelo — já que a saída estruturada nativa também não era confiável no Groq._
 
-**Note:** This project was built from Dave Ebbelaar's tutorial (https://youtu.be/qF5il_9IwME?si=jqpveg7OSjtk6E19), adapted and implemented by me as part of my learning in FastAPI, RAG, and applied AI engineering — including a full migration of the AI stack from the original (OpenAI) to a free alternative (Groq/Llama), detailed in the section below.
+_Ao colocar o projeto em produção em um plano gratuito de hospedagem (limite de 512 MB de RAM), o carregamento do modelo de embeddings via `sentence-transformers` (que depende do PyTorch completo, ~700MB de RAM) se tornou inviável. Substitui a geração de embeddings por **FastEmbed**, que executa o mesmo modelo (`all-MiniLM-L6-v2`) via runtime **ONNX** em vez de PyTorch — mesma qualidade de embeddings, com um consumo de memória de aproximadamente 150MB, permitindo que a aplicação rode de forma estável no limite de memória do plano gratuito._
+
+**Note:** This project was built from Dave Ebbelaar's tutorial (https://youtu.be/qF5il_9IwME?si=jqpveg7OSjtk6E19), adapted and implemented by me as part of my learning in FastAPI, RAG, and applied AI engineering — including a full migration of the AI stack from the original (OpenAI) to a free alternative (Groq/Llama), and a significant memory optimization to make deployment on free hosting viable, both detailed below.
 
 _This project follows Dave Ebbelaar's tutorial (https://github.com/daveebbelaar/document-copilot/tree/development), which originally uses OpenAI's paid models (GPT-5.5 for generation, with 1536-dimension embeddings). To make the project viable without cost, I adapted the entire AI stack to use Llama 3.3 70B via GroqCloud's free tier, along with local 384-dimension embeddings (all-MiniLM-L6-v2).
 This shift brought real technical challenges: open-weight models like Llama don't sustain native tool-calling as reliably as GPT-5.5 does, which the original relies on to actively fetch grounding context during generation. After several attempts with that pattern, I refactored the agent's architecture to inject retrieved context directly into the prompt instead of depending on tool calls, and implemented my own parser to extract and validate structured JSON from the model's raw output — since native structured output also wasn't reliable on Groq._
+
+_When deploying to a free hosting tier (512MB RAM limit), loading the embeddings model via `sentence-transformers` (which depends on full PyTorch, ~700MB RAM) became untenable. I replaced the embedding generation with **FastEmbed**, which runs the same model (`all-MiniLM-L6-v2`) through the **ONNX** runtime instead of PyTorch — identical embedding quality, at roughly 150MB of memory, allowing the app to run stably within the free tier's memory limit._
 
 An internal AI-powered RAG research assistant that lets investment analysts query a corpus of SEC financial filings in plain English and retrieve verified, fully grounded answers with interactive, clickable citation links.
 
@@ -20,12 +32,13 @@ An internal AI-powered RAG research assistant that lets investment analysts quer
 | --- | --- | --- |
 | **Backend** | Python 3.12+ (FastAPI) | HTTP API Router & Orchestration |
 | **LLM Engine** | Llama 3.3 70B (Groq Cloud) | Generation, Synthesis, and Citation Drafting |
-| **Embeddings** | all-MiniLM-L6-v2 (Local) | Local 384-dimensional vector calculations |
+| **Embeddings** | all-MiniLM-L6-v2 via FastEmbed (ONNX, local) | Low-memory local 384-dimensional vector calculations |
 | **Frontend** | React SPA (Vite + TypeScript) | Responsive, dual-pane citable user dashboard |
 | **Database** | Supabase (PostgreSQL + pgvector) | Chunks, vector storage, users, and thread persistence |
 | **Migrations** | Alembic + SQLAlchemy | Direct administrative schema modifications |
 | **Auth** | Supabase Auth (Email/Password) | Secure session-token exchanges |
 | **Package Managers** | `uv` (Python) / `pnpm` (Node) | High-speed, lockfile-safe environment syncs |
+| **Deploy** | Docker + Render (backend & frontend) | Free-tier production hosting |
 
 ---
 
@@ -79,7 +92,7 @@ OPENAI_API_KEY="your-groq-key-gsk_..."
 GROQ_API_KEY="your-groq-key-gsk_..."
 OPENAI_MODEL_NAME="llama-3.3-70b-versatile"
 
-# Local embeddings model (384-dims)
+# Local embeddings model (384-dims, served via FastEmbed/ONNX)
 OPENAI_EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
 OPENAI_EMBEDDING_DIMENSIONS=384
 
@@ -113,8 +126,8 @@ uv run data/convert_to_markdown.py
 # Step C: Provision your Supabase database user profiles table
 uv run python -m ingest.load_source_documents
 
-# Step D: Execute layout-aware chunking and generate local semantic vector embeddings
-# This downloads all-MiniLM-L6-v2 on its first pass and caches it locally
+# Step D: Execute layout-aware chunking and generate local semantic vector embeddings via FastEmbed
+# This downloads the ONNX-format all-MiniLM-L6-v2 model on its first pass and caches it locally
 uv run python -m ingest.chunk_and_embed --all --force
 ```
 
@@ -169,11 +182,10 @@ Sign up with an email and password, click **"New Chat"**, and enter your query!
 To test specific layers of your application in isolation, run these standalone backend test scripts:
 
 *   **Hybrid Search Testing**: Validate that hybrid pgvector and keyword FTS return correct files and scores:
-    ```bash
+```bash
     uv run python scripts/smoke_retrieval.py
-    ```
+```
 *   **LLM & Grounding Testing**: Validate that your PydanticAI model, prompt context, and citation auto-healer function cleanly:
-    ```bash
+```bash
     uv run python scripts/smoke_assistant.py
-    ```
 ```
