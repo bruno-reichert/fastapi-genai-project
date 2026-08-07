@@ -81,12 +81,10 @@ class StatusPart(BaseModel):
 
 MessagePart = Annotated[TextPart | CitationPart, Field(discriminator="type")]
 
-
 class UIMessage(BaseModel):
     id: str | None = None
     role: Literal["user", "assistant", "system"]
     parts: list[MessagePart]
-
 
 class CreateThreadRequest(BaseModel):
     title: str | None = None
@@ -114,6 +112,25 @@ class StreamRequest(BaseModel):
 
     thread_id: uuid.UUID = Field(validation_alias="threadId")
     messages: list[UIMessage]
+
+class GenericPart(BaseModel):
+    type: str
+    model_config = ConfigDict(extra="allow")
+
+# UPDATED LINE:
+MessagePart = Annotated[
+    TextPart | CitationPart | StatusPart, 
+    Field(discriminator="type")
+]
+
+class StatusPayload(BaseModel):
+    stage: str
+    message: str
+
+
+class StatusPart(BaseModel):
+    type: Literal["data-status"] = "data-status"
+    data: StatusPayload
 
 
 def thread_row_to_response(row: dict[str, Any]) -> ThreadResponse:

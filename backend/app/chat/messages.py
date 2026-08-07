@@ -124,3 +124,12 @@ def title_from_user_message(message: UIMessage) -> str:
     if len(text) <= MAX_TITLE_LENGTH:
         return text
     return text[: MAX_TITLE_LENGTH - 3] + "..."
+
+def text_from_parts(parts: list[MessagePart]) -> str:
+    text_bits = []
+    for part in parts:
+        if isinstance(part, TextPart):
+            text_bits.append(part.text)
+        elif getattr(part, "type", None) == "text" and hasattr(part, "text"):
+            text_bits.append(part.text)
+    return "".join(text_bits)
